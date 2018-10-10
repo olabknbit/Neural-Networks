@@ -45,6 +45,13 @@ class NeuronLayer():
             neuron_i['delta'] = error * sigmoid_derivative(neuron_i['output'])
         return self.layer
 
+    def update_weights(self, inputs, l_rate):
+        for neuron in self.layer:
+            for j in range(len(inputs)):
+                neuron['weights'][j] += l_rate * neuron['delta'] * inputs[j]
+            neuron['weights'][-1] += l_rate * neuron['delta']
+        return self.layer
+
 
 class NeuralNetwork():
     def __init__(self, layers):
@@ -75,7 +82,15 @@ class NeuralNetwork():
             next_layer = layer.backward_propagate(next_layer)
 
     def update_weights(self, row, l_rate):
-        pass
+        layer = self.layers[0]
+
+        # Crop last cell which is the class that data element/row belongs to.
+        inputs = row[:-1]
+        previous_layer = layer.update_weights(inputs, l_rate)
+
+        for layer in self.layers[1:]:
+            inputs = [neuron['output'] for neuron in previous_layer]
+            previous_layer = layer.update_weights(inputs, l_rate)
 
     def train(self, data_input, l_rate, n_iter, n_outputs):
         for epoch in range(n_iter):
@@ -102,7 +117,8 @@ class NeuralNetwork():
             print(layer.layer)
 
     def predict(self, row):
-        return 0, 1
+        outputs = self.forward_propagate(row)
+        return outputs.index(max(outputs))
 
 
 def main():
@@ -129,7 +145,7 @@ def main():
     # and 1 output value.
     # TODO should read data from files.
     training_set_inputs = array([[0, 0, 1, 0], [0, 1, 1, 1], [1, 0, 1, 1], [0, 1, 0, 1], [1, 0, 0, 1], [1, 1, 1, 0], [0, 0, 0, 0]])
-    # Should calculate the number of outoputs from the data.
+    # Should calculate the number of outputs from the data.
     n_outputs = 2
 
     # Train the neural network using the training set.
