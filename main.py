@@ -1,73 +1,107 @@
 from numpy import array, exp, random
 
 
+def activate(weights, inputs):
+    activation = weights[-1]
+    for weight, input in zip(weights[:-1], inputs):
+        activation += weight * input
+    return activation
+
+
+# Sigmoid transfer function
+def sigmoid(activation):
+    return 1.0 / (1.0 + exp(-activation))
+
+
+# Derivative of transfer function
+def sigmoid_derivative(output):
+    return output * (1.0 - output)
+
+
 class NeuronLayer():
     def __init__(self, n_inputs, n_neurons):
         # Create a layer with n_neurons neurons, each with n_inputs + 1 inputs (the +1 is for the bias).
         # TODO - biases should be settable.
-        self.layer = [{'weights': [random.random() for _ in range(n_inputs + 1)]} for _ in range(n_neurons)]
+        # random numbers from range [0; 0.3) are proven to be best
+        self.layer = [{'weights': [random.random() * 0.3 for _ in range(n_inputs + 1)]} for _ in range(n_neurons)]
 
     def __len__(self):
         return len(self.layer[0]['weights'])
+
+    # Calculate what are the outputs of the layer for the given inputs.
+    def forward_propagate(self, inputs):
+        outputs = []
+        for neuron in self.layer:
+            activation = activate(neuron['weights'], inputs)
+            neuron['output'] = sigmoid(activation)
+            outputs.append(neuron['output'])
+        return outputs
+
+    def backward_propagate(self, next_layer):
+        for i, neuron_i in enumerate(self.layer):
+            error = 0.0
+            for neuron_j in next_layer:
+                error += (neuron_j['weights'][i] * neuron_j['delta'])
+            neuron_i['delta'] = error * sigmoid_derivative(neuron_i['output'])
+        return self.layer
 
 
 class NeuralNetwork():
     def __init__(self, layers):
         self.layers = layers
 
-    def activate(self, weights, inputs):
-        activation = weights[-1]
-        for i in range(len(weights) - 1):
-            activation += weights[i] * inputs[i]
-        return activation
-
-    # Sigmoid transfer function
-    @staticmethod
-    def sigmoid(activation):
-        return 1.0 / (1.0 + exp(-activation))
-
-    # Derivative of transfer function
-    @staticmethod
-    def sigmoid_derivative(output):
-        return output * (1.0 - output)
-
+    # Pipe data row through the network and get final outputs.
     def forward_propagate(self, row):
-        inputs = row
+        outputs = row
         for layer in self.layers:
-            outputs = []
-            for neuron in layer.layer:
-                activation = self.activate(neuron['weights'], inputs)
-                neuron['output'] = self.sigmoid(activation)
-                outputs.append(neuron['output'])
-
             inputs = outputs
+            outputs = layer.forward_propagate(inputs)
 
-        return inputs
+        return outputs
 
-    def backward_propagate(self, expected):
-        pass
+    # Calculate 'delta' for every neuron. This will then be used to update the weights of the neurons.
+    def backward_propagate(self, expected_vals):
+        # Update last layer's (output layer's) 'delta' field.
+        # This field is needed to calculate 'delta' fields in previous (closer to input layer) layers,
+        # so then we can update the weights.
+        layer = self.layers[-1].layer
+        for neuron, expected in zip(layer, expected_vals):
+            error = (expected - neuron['output'])
+            neuron['delta'] = error * sigmoid_derivative(neuron['output'])
+
+        # Update other layers' 'delta' field, so we can later update wights based on value of this field.
+        next_layer = layer
+        for layer in reversed(self.layers[:-1]):
+            next_layer = layer.backward_propagate(next_layer)
 
     def update_weights(self, row, l_rate):
         pass
 
     def train(self, data_input, l_rate, n_iter, n_outputs):
-        for iteration in range(n_iter):
+        for epoch in range(n_iter):
             iter_error = 0
             for row in data_input:
                 outputs = self.forward_propagate(row)
-                expected = [0 for i in range(n_outputs)]
+
+                # The expected values are 0s for all neurons except for the ith,
+                # where i is the class that is the output.
+                expected = [0 for _ in range(n_outputs)]
                 expected[row[-1]] = 1
-                iter_error += sum([(expected[i] - outputs[i]) ** 2 for i in range(len(expected))])
+
+                iter_error += sum([(expected_i - output_i) ** 2 for expected_i, output_i in zip(expected, outputs)])
                 self.backward_propagate(expected)
                 self.update_weights(row, l_rate)
-                print('>epoch=%d, lrate=%.3f, error=%.3f' % (iteration, l_rate, iter_error))
+                print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, iter_error))
 
     def print_weights(self):
+        n_inputs = 0
         for i, layer in enumerate(self.layers):
-            print("    Layer %d (4 neurons, each with %d inputs): " % (i, (len(layer) - 1)))
+            n_neurons = len(layer) - 1
+            print("    Layer %d (%d neurons, each with %d inputs): " % (i, n_neurons, n_inputs))
+            n_inputs = n_neurons + 1
             print(layer.layer)
 
-    def guess(self, row):
+    def predict(self, row):
         return 0, 1
 
 
@@ -93,6 +127,7 @@ def main():
 
     # The training set. We have 7 examples, each consisting of 3 input values
     # and 1 output value.
+    # TODO should read data from files.
     training_set_inputs = array([[0, 0, 1, 0], [0, 1, 1, 1], [1, 0, 1, 1], [0, 1, 0, 1], [1, 0, 0, 1], [1, 1, 1, 0], [0, 0, 0, 0]])
     # Should calculate the number of outoputs from the data.
     n_outputs = 2
@@ -106,7 +141,7 @@ def main():
 
     # Test the neural network with a new situation.
     print("Stage 3) Considering a new situation [1, 1, 0] -> ?: ")
-    hidden_state, output = neural_network.guess(array([1, 1, 0]))
+    hidden_state, output = neural_network.predict(array([1, 1, 0]))
     print(output)
 
 
