@@ -1,4 +1,5 @@
-from numpy import array, exp, random
+from numpy import exp, random
+import numpy as np
 
 
 # Activation function - for weights and inputs returns their dot product.
@@ -123,14 +124,16 @@ class NeuralNetwork():
         outputs = self.forward_propagate(row[:-1])
         return outputs.index(max(outputs))
 
-    def test(self, test_data):
+    def test(self, output_classes, test_data):
+        predicted_outputs = []
         correct = 0
         for row in test_data:
             predicted_output = self.predict(row)
-            correct_output = row[-1]
+            correct_output = output_classes[row[-1]]
+            predicted_outputs.append(predicted_output)
             if correct_output == predicted_output:
                 correct += 1
-        return correct / len(test_data)
+        return correct / len(test_data), predicted_outputs
 
 
 def read_file(filename):
@@ -170,6 +173,19 @@ def get_n_inputs_outputs(data):
     return n_inputs, outputs_classes
 
 
+def plot_data(data, outputs_classes, predicted_outputs):
+    import matplotlib.pyplot as plt
+    colors = ['red', 'blue']
+
+    for row, predicted in zip(data, predicted_outputs) :
+        edgecolor = 'none'
+        output_class = outputs_classes[row[2]]
+        if predicted != output_class:
+            edgecolor = 'black'
+        plt.scatter(row[0], row[1], c=colors[output_class], edgecolors=edgecolor)
+    plt.show()
+
+
 def main():
     import argparse
 
@@ -185,9 +201,6 @@ def main():
     parser.add_argument('-test_filename')
 
     args = parser.parse_args()
-    print(args.feature)
-    print(args.neurons)
-    print(args.train_filename, args.test_filename)
 
     # Seed the random number generator
     random.seed(1)
@@ -221,8 +234,11 @@ def main():
 
     # Test the neural network.
     testing_set_inputs = read_file(args.test_filename)
-    accuracy = neural_network.test(testing_set_inputs)
+    accuracy, predicted_outputs = neural_network.test(outputs_classes, testing_set_inputs)
     print("accuracy: %.3f" % accuracy)
+
+    # Plot test data. Dots with black egdes are the ones that didn't get classified correctly.
+    plot_data(testing_set_inputs, outputs_classes, predicted_outputs)
 
 
 if __name__ == "__main__":
