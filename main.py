@@ -99,6 +99,8 @@ class NeuralNetwork():
         for epoch in range(n_iter):
             iter_error = 0.0
             for row in data_input:
+                # The net should only predict the class based on the features,
+                # so the last cell which represents the class is not passed forward.
                 outputs = self.forward_propagate(row[:-1])
 
                 # The expected values are 0s for all neurons except for the ith,
@@ -112,16 +114,23 @@ class NeuralNetwork():
                 print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, iter_error))
 
     def print_weights(self):
-        n_inputs = 0
         for i, layer in enumerate(self.layers):
             n_neurons = len(layer) - 1
-            print("    Layer %d (%d neurons, each with %d inputs): " % (i, n_neurons, n_inputs))
-            n_inputs = n_neurons + 1
+            print("    Layer %d (%d neurons): " % (i, n_neurons))
             print(layer.neurons)
 
     def predict(self, row):
         outputs = self.forward_propagate(row[:-1])
         return outputs.index(max(outputs))
+
+    def test(self, test_data):
+        correct = 0
+        for row in test_data:
+            predicted_output = self.predict(row)
+            correct_output = row[-1]
+            if correct_output == predicted_output:
+                correct += 1
+        return correct / len(test_data)
 
 
 def read_file(filename):
@@ -136,7 +145,6 @@ def read_file(filename):
             else:
                 row = [float(x) for x in row[:-1]] + [int(row[-1])]
                 rows.append(row)
-                print(row)
         return rows
 
 
@@ -152,9 +160,6 @@ def main():
     # Seed the random number generator
     random.seed(1)
 
-    # The training set. We have 7 examples, each consisting of 3 input values
-    # and 1 output value.
-    # TODO should read data from files.
     training_set_inputs = read_train_data()
     # Should calculate the number of outputs from the data.
     n_outputs = 3
@@ -163,12 +168,8 @@ def main():
 
     # TODO should read layer data from user input.
     # TODO: use argparse or sth to read user input.
-    # Create layer (4 neurons, each with 3 inputs)
     input_layer = NeuronLayer(n_inputs, 5)
-
     hidden_layer = NeuronLayer(5, 4)
-
-    # Create layer (2 neurons with 4 inputs)
     output_layer = NeuronLayer(4, n_outputs)
 
     # Combine the layers to create a neural network
@@ -179,22 +180,15 @@ def main():
     neural_network.print_weights()
 
     # Train neural network.
-    neural_network.train(training_set_inputs, 0.5, 100, n_outputs)
+    neural_network.train(training_set_inputs, 0.3, 1000, n_outputs)
 
     print("Stage 2) New synaptic weights after training: ")
     neural_network.print_weights()
 
-    # Test the neural network with a new situation.
-    # TODO: Use test data sets.
-    print("Stage 3) Considering a new situation [1, 1, 0] -> ?: ")
+    # Test the neural network.
     testing_set_inputs = read_test_data()
-    correct = 0
-    for row in testing_set_inputs:
-        predicted_output = neural_network.predict(row)
-        correct_output = row[-1]
-        if correct_output == predicted_output:
-            correct += 1
-    print("accuracy: " + str(correct / len(testing_set_inputs)))
+    accuracy = neural_network.test(testing_set_inputs)
+    print("accuracy: %.3f" % accuracy)
 
 
 if __name__ == "__main__":
