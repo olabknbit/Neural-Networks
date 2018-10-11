@@ -95,7 +95,7 @@ class NeuralNetwork():
             inputs = [neuron['output'] for neuron in previous_layer]
             previous_layer = layer.update_weights(inputs, l_rate)
 
-    def train(self, data_input, l_rate, n_iter, n_outputs):
+    def train(self, data_input, l_rate, n_iter, output_classes):
         for epoch in range(n_iter):
             iter_error = 0.0
             for row in data_input:
@@ -105,8 +105,8 @@ class NeuralNetwork():
 
                 # The expected values are 0s for all neurons except for the ith,
                 # where i is the class that is the output.
-                expected = [0.0 for _ in range(n_outputs)]
-                expected[row[-1]] = 1.0
+                expected = [0.0 for _ in range(len(output_classes))]
+                expected[output_classes[row[-1]]] = 1.0
 
                 iter_error += sum([(expected_i - output_i) ** 2 for expected_i, output_i in zip(expected, outputs)])
                 self.backward_propagate(expected)
@@ -156,37 +156,71 @@ def read_test_data():
     return read_file('projekt1/classification/data.simple.test.100.csv')
 
 
+# Return number of features - n_inputs for NN and outoput_classes which is a map like {3: 0, 2: 1:, 5: 2},
+# where each key represents a class (as they occur in original data, eg, here class 3, 2 and 5) and indices they have
+#  in NN.
+def get_n_inputs_outputs(data):
+    n_inputs = len(data[0]) - 1
+    outputs = set()
+    for row in data:
+        outputs.add(row[-1])
+    outputs_classes = {}
+    for i, outpt in enumerate(outputs):
+        outputs_classes[outpt] = i
+    return n_inputs, outputs_classes
+
+
 def main():
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('-n', '--neurons', nargs='+', type=int, help='<Required> Number of neurons for each layer',
+                        required=True)
+
+    parser.add_argument('--regression', dest='regression', action='store_true')
+    parser.add_argument('--classification', dest='regression', action='store_false')
+    parser.set_defaults(feature=False)
+
+    parser.add_argument('-train_filename')
+    parser.add_argument('-test_filename')
+
+    args = parser.parse_args()
+    print(args.feature)
+    print(args.neurons)
+    print(args.train_filename, args.test_filename)
+
     # Seed the random number generator
     random.seed(1)
 
-    training_set_inputs = read_train_data()
-    # Should calculate the number of outputs from the data.
-    n_outputs = 3
+    training_set_inputs = read_file(args.train_filename)
 
-    n_inputs = 2
-
-    # TODO should read layer data from user input.
-    # TODO: use argparse or sth to read user input.
-    input_layer = NeuronLayer(n_inputs, 5)
-    hidden_layer = NeuronLayer(5, 4)
-    output_layer = NeuronLayer(4, n_outputs)
+    # Should calculate the number of inputs and outputs from the data.
+    n_inputs, outputs_classes = get_n_inputs_outputs(training_set_inputs)
+    n_outputs = len(outputs_classes)
 
     # Combine the layers to create a neural network
-    layers = [input_layer, hidden_layer, output_layer]
+    layers = []
+    n_in = n_inputs
+    for n_neurons in args.neurons:
+        layers.append(NeuronLayer(n_in, n_neurons))
+        print(n_in, n_neurons)
+        n_in = n_neurons
+    layers.append(NeuronLayer(n_in, n_outputs))
+    print(n_in, n_outputs)
+
     neural_network = NeuralNetwork(layers)
 
     print("Stage 1) Random starting synaptic weights: ")
     neural_network.print_weights()
 
     # Train neural network.
-    neural_network.train(training_set_inputs, 0.3, 1000, n_outputs)
+    neural_network.train(training_set_inputs, 0.3, 1000, outputs_classes)
 
     print("Stage 2) New synaptic weights after training: ")
     neural_network.print_weights()
 
     # Test the neural network.
-    testing_set_inputs = read_test_data()
+    testing_set_inputs = read_file(args.test_filename)
     accuracy = neural_network.test(testing_set_inputs)
     print("accuracy: %.3f" % accuracy)
 
