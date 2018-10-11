@@ -96,7 +96,7 @@ class NeuralNetwork():
             inputs = [neuron['output'] for neuron in previous_layer]
             previous_layer = layer.update_weights(inputs, l_rate)
 
-    def train(self, data_input, l_rate, n_iter, output_classes):
+    def train(self, data_input, l_rate, n_iter, output_classes, visualize_every):
         for epoch in range(n_iter):
             iter_error = 0.0
             for row in data_input:
@@ -112,7 +112,9 @@ class NeuralNetwork():
                 iter_error += sum([(expected_i - output_i) ** 2 for expected_i, output_i in zip(expected, outputs)])
                 self.backward_propagate(expected)
                 self.update_weights(row, l_rate)
+            if epoch % visualize_every == 0:
                 print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, iter_error))
+                self.print_weights()
 
     def print_weights(self):
         for i, layer in enumerate(self.layers):
@@ -193,12 +195,17 @@ def main():
     parser.add_argument('-n', '--neurons', nargs='+', type=int, help='<Required> Number of neurons for each layer',
                         required=True)
 
+    # TODO: modify the algo so that it handles regression as well, not only classification.
     parser.add_argument('--regression', dest='regression', action='store_true')
     parser.add_argument('--classification', dest='regression', action='store_false')
     parser.set_defaults(feature=False)
 
     parser.add_argument('-train_filename')
     parser.add_argument('-test_filename')
+
+    parser.add_argument('-v', '--visualize_every', type=int,
+                        help='<Required> How ofter (every n iterations) print neuron\'s weights.',
+                        required=True)
 
     args = parser.parse_args()
 
@@ -227,9 +234,10 @@ def main():
     neural_network.print_weights()
 
     # Train neural network.
-    neural_network.train(training_set_inputs, 0.3, 1000, outputs_classes)
+    neural_network.train(training_set_inputs, 0.3, 1000, outputs_classes, args.visualize_every)
 
     print("Stage 2) New synaptic weights after training: ")
+    # TODO: save weights to file and read them from file during initialization to 'restart' training.
     neural_network.print_weights()
 
     # Test the neural network.
