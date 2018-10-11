@@ -207,6 +207,10 @@ def main():
                         help='<Required> How ofter (every n iterations) print neuron\'s weights.',
                         required=True)
 
+    parser.add_argument('-e', '--number_of_epochs', type=int,
+                        help='<Required> Number of epochs (iterations) for the NN to run',
+                        required=True)
+
     args = parser.parse_args()
 
     # Seed the random number generator
@@ -234,7 +238,7 @@ def main():
     neural_network.print_weights()
 
     # Train neural network.
-    neural_network.train(training_set_inputs, 0.3, 1000, outputs_classes, args.visualize_every)
+    neural_network.train(training_set_inputs, 0.3, args.number_of_epochs, outputs_classes, args.visualize_every)
 
     print("Stage 2) New synaptic weights after training: ")
     # TODO: save weights to file and read them from file during initialization to 'restart' training.
