@@ -97,14 +97,14 @@ class NeuralNetwork():
 
     def train(self, data_input, l_rate, n_iter, n_outputs):
         for epoch in range(n_iter):
-            iter_error = 0
+            iter_error = 0.0
             for row in data_input:
-                outputs = self.forward_propagate(row)
+                outputs = self.forward_propagate(row[:-1])
 
                 # The expected values are 0s for all neurons except for the ith,
                 # where i is the class that is the output.
-                expected = [0 for _ in range(n_outputs)]
-                expected[row[-1]] = 1
+                expected = [0.0 for _ in range(n_outputs)]
+                expected[row[-1]] = 1.0
 
                 iter_error += sum([(expected_i - output_i) ** 2 for expected_i, output_i in zip(expected, outputs)])
                 self.backward_propagate(expected)
@@ -120,23 +120,56 @@ class NeuralNetwork():
             print(layer.neurons)
 
     def predict(self, row):
-        outputs = self.forward_propagate(row)
+        outputs = self.forward_propagate(row[:-1])
         return outputs.index(max(outputs))
+
+
+def read_file(filename):
+    import csv
+    with open(filename) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        rows = []
+        first = True
+        for row in csv_reader:
+            if first:
+                first = False
+            else:
+                row = [float(x) for x in row[:-1]] + [int(row[-1])]
+                rows.append(row)
+                print(row)
+        return rows
+
+
+def read_train_data():
+    return read_file('projekt1/classification/data.simple.train.100.csv')
+
+
+def read_test_data():
+    return read_file('projekt1/classification/data.simple.test.100.csv')
 
 
 def main():
     # Seed the random number generator
     random.seed(1)
 
+    # The training set. We have 7 examples, each consisting of 3 input values
+    # and 1 output value.
+    # TODO should read data from files.
+    training_set_inputs = read_train_data()
+    # Should calculate the number of outputs from the data.
+    n_outputs = 3
+
+    n_inputs = 2
+
     # TODO should read layer data from user input.
     # TODO: use argparse or sth to read user input.
     # Create layer (4 neurons, each with 3 inputs)
-    input_layer = NeuronLayer(3, 5)
+    input_layer = NeuronLayer(n_inputs, 5)
 
     hidden_layer = NeuronLayer(5, 4)
 
     # Create layer (2 neurons with 4 inputs)
-    output_layer = NeuronLayer(4, 2)
+    output_layer = NeuronLayer(4, n_outputs)
 
     # Combine the layers to create a neural network
     layers = [input_layer, hidden_layer, output_layer]
@@ -145,15 +178,8 @@ def main():
     print("Stage 1) Random starting synaptic weights: ")
     neural_network.print_weights()
 
-    # The training set. We have 7 examples, each consisting of 3 input values
-    # and 1 output value.
-    # TODO should read data from files.
-    training_set_inputs = array([[0, 0, 1, 0], [0, 1, 1, 1], [1, 0, 1, 1], [0, 1, 0, 1], [1, 0, 0, 1], [1, 1, 1, 0], [0, 0, 0, 0]])
-    # Should calculate the number of outputs from the data.
-    n_outputs = 2
-
     # Train neural network.
-    neural_network.train(training_set_inputs, 0.5, 6000, n_outputs)
+    neural_network.train(training_set_inputs, 0.5, 100, n_outputs)
 
     print("Stage 2) New synaptic weights after training: ")
     neural_network.print_weights()
@@ -161,8 +187,14 @@ def main():
     # Test the neural network with a new situation.
     # TODO: Use test data sets.
     print("Stage 3) Considering a new situation [1, 1, 0] -> ?: ")
-    output = neural_network.predict([1, 1, 0])
-    print(output)
+    testing_set_inputs = read_test_data()
+    correct = 0
+    for row in testing_set_inputs:
+        predicted_output = neural_network.predict(row)
+        correct_output = row[-1]
+        if correct_output == predicted_output:
+            correct += 1
+    print("accuracy: " + str(correct / len(testing_set_inputs)))
 
 
 if __name__ == "__main__":
