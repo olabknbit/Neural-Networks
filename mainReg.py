@@ -2,7 +2,7 @@ from numpy import exp, random
 import numpy as np
 
 
-# Activation function - for weights and inputs returns their dot product.
+ Activation function - for weights and inputs returns their dot product.
 def activate(weights, inputs):
     activation = weights[-1]
     for weight, input in zip(weights[:-1], inputs):
@@ -55,6 +55,7 @@ class NeuronLayer():
                 neuron['weights'][j] += l_rate * neuron['delta'] * inputs[j]
             neuron['weights'][-1] += l_rate * neuron['delta']
         return self.neurons
+
 
 
 class NeuralNetwork():
@@ -124,6 +125,8 @@ class NeuralNetwork():
 
     def predict(self, row):
         outputs = self.forward_propagate(row[:-1])
+
+        print(outputs)
         return outputs.index(max(outputs))
 
     def test(self, output_classes, test_data):
@@ -138,40 +141,14 @@ class NeuralNetwork():
         return correct / len(test_data), predicted_outputs
 
 
-def read_file(filename):
-    import csv
-    with open(filename) as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=',')
-        rows = []
-        first = True
-        for row in csv_reader:
-            if first:
-                first = False
-            else:
-                row = [float(x) for x in row[:-1]] + [int(row[-1])]
-                rows.append(row)
-        return rows
 
-
-def read_train_data():
-    return read_file('projekt1/classification/data.simple.train.100.csv')
-
-
-def read_test_data():
-    return read_file('projekt1/classification/data.simple.test.100.csv')
-
-
-# Return number of features - n_inputs for NN and outoput_classes which is a map like {3: 0, 2: 1:, 5: 2},
-# where each key represents a class (as they occur in original data, eg, here class 3, 2 and 5) and indices they have
-#  in NN.
 def get_n_inputs_outputs(data):
     n_inputs = len(data[0]) - 1
     outputs = set()
-    for row in data:
-        outputs.add(row[-1])
+
     outputs_classes = {}
-    for i, outpt in enumerate(outputs):
-        outputs_classes[outpt] = i
+    outputs_classes[0] = 0
+
     return n_inputs, outputs_classes
 
 
@@ -187,6 +164,19 @@ def plot_data(data, outputs_classes, predicted_outputs):
         plt.scatter(row[0], row[1], c=colors[output_class], edgecolors=edgecolor)
     plt.show()
 
+def read_file(filename):
+    import csv
+    with open(filename) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        rows = []
+        first = True
+        for row in csv_reader:
+            if first:
+                first = False
+            else:
+                row = [float(x) for x in row[:-1]] + [int(row[-1])]
+                rows.append(row)
+        return rows
 
 def main():
     import argparse
@@ -207,10 +197,6 @@ def main():
                         help='<Required> How ofter (every n iterations) print neuron\'s weights.',
                         required=True)
 
-    parser.add_argument('-e', '--number_of_epochs', type=int,
-                        help='<Required> Number of epochs (iterations) for the NN to run',
-                        required=True)
-
     args = parser.parse_args()
 
     # Seed the random number generator
@@ -221,36 +207,6 @@ def main():
     # Should calculate the number of inputs and outputs from the data.
     n_inputs, outputs_classes = get_n_inputs_outputs(training_set_inputs)
     n_outputs = len(outputs_classes)
-
-    # Combine the layers to create a neural network
-    layers = []
-    n_in = n_inputs
-    for n_neurons in args.neurons:
-        layers.append(NeuronLayer(n_in, n_neurons))
-        print(n_in, n_neurons)
-        n_in = n_neurons
-    layers.append(NeuronLayer(n_in, n_outputs))
-    print(n_in, n_outputs)
-
-    neural_network = NeuralNetwork(layers)
-
-    print("Stage 1) Random starting synaptic weights: ")
-    neural_network.print_weights()
-
-    # Train neural network.
-    neural_network.train(training_set_inputs, 0.3, args.number_of_epochs, outputs_classes, args.visualize_every)
-
-    print("Stage 2) New synaptic weights after training: ")
-    # TODO: save weights to file and read them from file during initialization to 'restart' training.
-    neural_network.print_weights()
-
-    # Test the neural network.
-    testing_set_inputs = read_file(args.test_filename)
-    accuracy, predicted_outputs = neural_network.test(outputs_classes, testing_set_inputs)
-    print("accuracy: %.3f" % accuracy)
-
-    # Plot test data. Dots with black egdes are the ones that didn't get classified correctly.
-    plot_data(testing_set_inputs, outputs_classes, predicted_outputs)
 
 
 if __name__ == "__main__":

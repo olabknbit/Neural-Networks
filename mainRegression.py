@@ -14,12 +14,14 @@ def activate(weights, inputs):
 # Sigmoid transfer function
 def sigmoid(activation):
     return 1.0 / (1.0 + exp(-activation))
+    #return 1.0*(exp(activation)-exp(-activation))/(0.0+exp(activation)+exp(-activation))
 
 
 # TODO: Each transfer function should have it's derivative.
 # Derivative of transfer function
 def sigmoid_derivative(output):
     return output * (1.0 - output)
+    #return 1 - sigmoid(output)
 
 
 class NeuronLayer():
@@ -36,9 +38,16 @@ class NeuronLayer():
     def forward_propagate(self, inputs):
         outputs = []
         for neuron in self.neurons:
+
             activation = activate(neuron['weights'], inputs)
+
             neuron['output'] = sigmoid(activation)
+
+            #print(neuron['output'])
+            #neuron['output'] = activation
             outputs.append(neuron['output'])
+
+        #print(outputs)
         return outputs
 
     def backward_propagate(self, next_layer):
@@ -78,6 +87,8 @@ class NeuralNetwork():
         layer = self.layers[-1].neurons
         for neuron, expected in zip(layer, expected_vals):
             error = (expected - neuron['output'])
+            #print(error)
+
             neuron['delta'] = error * sigmoid_derivative(neuron['output'])
 
         # Update other layers' 'delta' field, so we can later update wights based on value of this field.
@@ -104,10 +115,7 @@ class NeuralNetwork():
                 # so the last cell which represents the class is not passed forward.
                 outputs = self.forward_propagate(row[:-1])
 
-                # The expected values are 0s for all neurons except for the ith,
-                # where i is the class that is the output.
-                expected = [0.0 for _ in range(len(output_classes))]
-                expected[output_classes[row[-1]]] = 1.0
+                expected = row[:-1]
 
                 iter_error += sum([(expected_i - output_i) ** 2 for expected_i, output_i in zip(expected, outputs)])
                 self.backward_propagate(expected)
@@ -122,16 +130,22 @@ class NeuralNetwork():
             print("    Layer %d (%d neurons): " % (i, n_neurons))
             print(layer.neurons)
 
+
     def predict(self, row):
+
         outputs = self.forward_propagate(row[:-1])
-        return outputs.index(max(outputs))
+        #print(outputs)
+
+        return outputs
 
     def test(self, output_classes, test_data):
         predicted_outputs = []
         correct = 0
         for row in test_data:
             predicted_output = self.predict(row)
-            correct_output = output_classes[row[-1]]
+            correct_output = row[:-1]
+            # print(row)
+            # print(predicted_output)
             predicted_outputs.append(predicted_output)
             if correct_output == predicted_output:
                 correct += 1
@@ -148,7 +162,7 @@ def read_file(filename):
             if first:
                 first = False
             else:
-                row = [float(x) for x in row[:-1]] + [int(row[-1])]
+                row = [float(x) for x in row[:-1]] + [float(row[-1])]
                 rows.append(row)
         return rows
 
@@ -166,25 +180,37 @@ def read_test_data():
 #  in NN.
 def get_n_inputs_outputs(data):
     n_inputs = len(data[0]) - 1
-    outputs = set()
-    for row in data:
-        outputs.add(row[-1])
+
     outputs_classes = {}
-    for i, outpt in enumerate(outputs):
-        outputs_classes[outpt] = i
+
+    outputs_classes[0] = 0
+
+
     return n_inputs, outputs_classes
 
 
 def plot_data(data, outputs_classes, predicted_outputs):
     import matplotlib.pyplot as plt
-    colors = ['red', 'blue']
-
-    for row, predicted in zip(data, predicted_outputs) :
-        edgecolor = 'none'
-        output_class = outputs_classes[row[2]]
-        if predicted != output_class:
-            edgecolor = 'black'
-        plt.scatter(row[0], row[1], c=colors[output_class], edgecolors=edgecolor)
+    colors = ['red', 'blue','green']
+    # print(data)
+    # print("michal123456")
+    # print(outputs_classes)
+    #print("michal123456")
+    #print("a")
+    #print(predicted_outputs)
+    # print("michal123456")
+    # print(predicted_outputs)
+    i=0
+    for row in data :
+        plt.scatter(row[0], row[1], c=colors[0])
+        plt.scatter(row[0], predicted_outputs[i], c=colors[1])
+        #print(predicted_outputs[i])
+        i+=1
+    # for row, predicted in zip(data, predicted_outputs) :
+    #     plt.scatter(row[0], row[1], c=colors[1])
+    # for row, predicted in zip(data, predicted_outputs) :
+    #     plt.scatter(row[0], row[1], c=colors[2])
+    #
     plt.show()
 
 
@@ -207,17 +233,25 @@ def main():
                         help='<Required> How ofter (every n iterations) print neuron\'s weights.',
                         required=True)
 
-    parser.add_argument('-e', '--number_of_epochs', type=int,
-                        help='<Required> Number of epochs (iterations) for the NN to run',
-                        required=True)
-
     args = parser.parse_args()
 
     # Seed the random number generator
     random.seed(1)
 
     training_set_inputs = read_file(args.train_filename)
-
+    #print(training_set_inputs)
+    max = -float('inf')
+    min = float('inf')
+    for row in training_set_inputs:
+        if (max < row[1]):
+            max = row[1]
+        if (min > row[1]):
+            min = row[1]
+    #print(max)
+    for row in training_set_inputs:
+        row[1]= (row[1]-min)/(max-min)
+    #print(training_set_inputs)
+    #return
     # Should calculate the number of inputs and outputs from the data.
     n_inputs, outputs_classes = get_n_inputs_outputs(training_set_inputs)
     n_outputs = len(outputs_classes)
@@ -227,10 +261,8 @@ def main():
     n_in = n_inputs
     for n_neurons in args.neurons:
         layers.append(NeuronLayer(n_in, n_neurons))
-        print(n_in, n_neurons)
         n_in = n_neurons
     layers.append(NeuronLayer(n_in, n_outputs))
-    print(n_in, n_outputs)
 
     neural_network = NeuralNetwork(layers)
 
@@ -238,14 +270,28 @@ def main():
     neural_network.print_weights()
 
     # Train neural network.
-    neural_network.train(training_set_inputs, 0.3, args.number_of_epochs, outputs_classes, args.visualize_every)
+    neural_network.train(training_set_inputs, 0.3, 4, outputs_classes, args.visualize_every)
 
     print("Stage 2) New synaptic weights after training: ")
     # TODO: save weights to file and read them from file during initialization to 'restart' training.
     neural_network.print_weights()
 
+
     # Test the neural network.
     testing_set_inputs = read_file(args.test_filename)
+
+    max = -float('inf')
+    min = float('inf')
+    for row in testing_set_inputs:
+        if (max < row[1]):
+            max = row[1]
+        if (min > row[1]):
+            min = row[1]
+    #print(max)
+    for row in testing_set_inputs:
+        row[1]= (row[1]-min)/(max-min)
+
+
     accuracy, predicted_outputs = neural_network.test(outputs_classes, testing_set_inputs)
     print("accuracy: %.3f" % accuracy)
 
