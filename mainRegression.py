@@ -206,11 +206,11 @@ def plot_data(data, predicted_outputs, training_data):
     for i, row in enumerate(data):
         plt.scatter(row[0], row[1], c=colors[0])
         plt.scatter(row[0], predicted_outputs[i], c=colors[1])
-        
+
     for row in training_data:
         plt.scatter(row[0], row[1], c=colors[2])
 
-    plt.show()
+    plt.show()git a
 
 
 def main():
