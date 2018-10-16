@@ -4,6 +4,7 @@ import numpy as np
 
 # Activation function - for weights and inputs returns their dot product.
 def activate(weights, inputs):
+    # Add bias.
     activation = weights[-1]
     for weight, input in zip(weights[:-1], inputs):
         activation += weight * input
@@ -15,7 +16,7 @@ def activate(weights, inputs):
 def sigmoid(activation):
     return 1.0 / (1.0 + exp(-activation))
 
-
+# TODO nie tangens hip do porownania
 # TODO: Each transfer function should have it's derivative.
 # Derivative of transfer function
 def sigmoid_derivative(output):
@@ -102,6 +103,7 @@ class NeuralNetwork():
             for row in data_input:
                 # The net should only predict the class based on the features,
                 # so the last cell which represents the class is not passed forward.
+                # TODO : stochastic bp maybe
                 outputs = self.forward_propagate(row[:-1])
 
                 # The expected values are 0s for all neurons except for the ith,
@@ -111,6 +113,7 @@ class NeuralNetwork():
 
                 iter_error += sum([(expected_i - output_i) ** 2 for expected_i, output_i in zip(expected, outputs)])
                 self.backward_propagate(expected)
+                # albo stochastic albo batchowe update TODO
                 self.update_weights(row, l_rate)
             if epoch % visualize_every == 0:
                 print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, iter_error))

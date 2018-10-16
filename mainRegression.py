@@ -4,24 +4,43 @@ import numpy as np
 
 # Activation function - for weights and inputs returns their dot product.
 def activate(weights, inputs):
+    # Add bias.
     activation = weights[-1]
     for weight, input in zip(weights[:-1], inputs):
         activation += weight * input
     return activation
 
 
+def linear(activation):
+    return activation
+
+
+def linear_derivative(_):
+    return 1
+
+#
+# def reLu(activation):
+#     return max(0, activation)
+#
+#
+# def reLu_derivative(output):
+#     return 0 if output < 0 else 1
+
+
 # TODO: should be implemented so that different (tanh, logistic, etc) transfer functions can be simply interchangeable.
 # Sigmoid transfer function
 def sigmoid(activation):
     return 1.0 / (1.0 + exp(-activation))
-    #return 1.0*(exp(activation)-exp(-activation))/(0.0+exp(activation)+exp(-activation))
+    # return activation * 0.3
+    # return 1.0*(exp(activation)-exp(-activation))/(0.0+exp(activation)+exp(-activation))
 
 
 # TODO: Each transfer function should have it's derivative.
 # Derivative of transfer function
 def sigmoid_derivative(output):
     return output * (1.0 - output)
-    #return 1 - sigmoid(output)
+    # return 0.3
+    # return 1 - sigmoid(output)
 
 
 class NeuronLayer():
@@ -38,11 +57,8 @@ class NeuronLayer():
     def forward_propagate(self, inputs):
         outputs = []
         for neuron in self.neurons:
-
             activation = activate(neuron['weights'], inputs)
-
             neuron['output'] = sigmoid(activation)
-
             outputs.append(neuron['output'])
 
         return outputs
@@ -62,6 +78,15 @@ class NeuronLayer():
             neuron['weights'][-1] += l_rate * neuron['delta']
         return self.neurons
 
+    def linear_propagate(self, inputs):
+        outputs = []
+        for neuron in self.neurons:
+            activation = activate(neuron['weights'], inputs)
+            neuron['output'] = linear(activation)
+            outputs.append(neuron['output'])
+
+        return outputs
+
 
 class NeuralNetwork():
     def __init__(self, layers):
@@ -70,22 +95,24 @@ class NeuralNetwork():
     # Pipe data row through the network and get final outputs.
     def forward_propagate(self, row):
         outputs = row
-        for layer in self.layers:
+        for layer in self.layers[:-1]:
             inputs = outputs
             outputs = layer.forward_propagate(inputs)
+
+        inputs = outputs
+        outputs = self.layers[-1].linear_propagate(inputs)
 
         return outputs
 
     # Calculate 'delta' for every neuron. This will then be used to update the weights of the neurons.
-    def backward_propagate(self, expected_vals):
+    def backward_propagate(self, expected_val):
         # Update last layer's (output layer's) 'delta' field.
         # This field is needed to calculate 'delta' fields in previous (closer to input layer) layers,
         # so then we can update the weights.
         layer = self.layers[-1].neurons
-        for neuron, expected in zip(layer, expected_vals):
-            error = (expected - neuron['output'])
-
-            neuron['delta'] = error * sigmoid_derivative(neuron['output'])
+        neuron = layer[0]
+        error = (expected_val - neuron['output'])
+        neuron['delta'] = error * linear_derivative(neuron['output'])
 
         # Update other layers' 'delta' field, so we can later update wights based on value of this field.
         next_layer = layer
@@ -111,9 +138,8 @@ class NeuralNetwork():
                 # so the last cell which represents the class is not passed forward.
                 outputs = self.forward_propagate(row[:-1])
 
-                expected = row[:-1]
-
-                iter_error += sum([(expected_i - output_i) ** 2 for expected_i, output_i in zip(expected, outputs)])
+                expected = row[-1]
+                iter_error += np.sqrt(expected ** 2)
                 self.backward_propagate(expected)
                 self.update_weights(row, l_rate)
             if epoch % visualize_every == 0:
@@ -173,29 +199,18 @@ def get_n_inputs_outputs(data):
     return n_inputs, outputs_classes
 
 
-def plot_data(data, predicted_outputs):
+def plot_data(data, predicted_outputs, training_data):
     import matplotlib.pyplot as plt
-    colors = ['red', 'blue','green']
+    colors = ['red', 'blue', 'green']
 
     for i, row in enumerate(data):
         plt.scatter(row[0], row[1], c=colors[0])
         plt.scatter(row[0], predicted_outputs[i], c=colors[1])
+        
+    for row in training_data:
+        plt.scatter(row[0], row[1], c=colors[2])
 
     plt.show()
-
-
-def normalize(inputs):
-    max = -float('inf')
-    min = float('inf')
-    for row in inputs:
-        if max < row[1]:
-            max = row[1]
-        if min > row[1]:
-            min = row[1]
-    for row in inputs:
-        row[1] = (row[1] - min) / (max - min)
-
-    return inputs
 
 
 def main():
@@ -222,7 +237,6 @@ def main():
     random.seed(1)
 
     training_set_inputs = read_file(args.train_filename)
-    training_set_inputs = normalize(training_set_inputs)
 
     # Should calculate the number of inputs and outputs from the data.
     n_inputs, outputs_classes = get_n_inputs_outputs(training_set_inputs)
@@ -242,7 +256,7 @@ def main():
     neural_network.print_weights()
 
     # Train neural network.
-    neural_network.train(training_set_inputs, 0.3, args.number_of_epochs, args.visualize_every)
+    neural_network.train(training_set_inputs, 0.01, args.number_of_epochs, args.visualize_every)
 
     print("Stage 2) New synaptic weights after training: ")
     # TODO: save weights to file and read them from file during initialization to 'restart' training.
@@ -250,12 +264,11 @@ def main():
 
     # Test the neural network.
     testing_set_inputs = read_file(args.test_filename)
-    testing_set_inputs = normalize(testing_set_inputs)
 
     accuracy, predicted_outputs = neural_network.test(testing_set_inputs)
     print("accuracy: %.3f" % accuracy)
 
-    plot_data(testing_set_inputs, predicted_outputs)
+    plot_data(testing_set_inputs, predicted_outputs, training_set_inputs)
 
 
 if __name__ == "__main__":
