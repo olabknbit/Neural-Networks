@@ -43,11 +43,8 @@ class NeuronLayer():
 
             neuron['output'] = sigmoid(activation)
 
-            #print(neuron['output'])
-            #neuron['output'] = activation
             outputs.append(neuron['output'])
 
-        #print(outputs)
         return outputs
 
     def backward_propagate(self, next_layer):
@@ -87,7 +84,6 @@ class NeuralNetwork():
         layer = self.layers[-1].neurons
         for neuron, expected in zip(layer, expected_vals):
             error = (expected - neuron['output'])
-            #print(error)
 
             neuron['delta'] = error * sigmoid_derivative(neuron['output'])
 
@@ -107,7 +103,7 @@ class NeuralNetwork():
             inputs = [neuron['output'] for neuron in previous_layer]
             previous_layer = layer.update_weights(inputs, l_rate)
 
-    def train(self, data_input, l_rate, n_iter, output_classes, visualize_every):
+    def train(self, data_input, l_rate, n_iter, visualize_every):
         for epoch in range(n_iter):
             iter_error = 0.0
             for row in data_input:
@@ -130,26 +126,18 @@ class NeuralNetwork():
             print("    Layer %d (%d neurons): " % (i, n_neurons))
             print(layer.neurons)
 
-
     def predict(self, row):
+        return self.forward_propagate(row[:-1])
 
-        outputs = self.forward_propagate(row[:-1])
-        #print(outputs)
-
-        return outputs
-
-    def test(self, output_classes, test_data):
+    def test(self, test_data):
         predicted_outputs = []
-        correct = 0
+        error = 0.0
         for row in test_data:
-            predicted_output = self.predict(row)
-            correct_output = row[:-1]
-            # print(row)
-            # print(predicted_output)
+            predicted_output = self.predict(row)[0]
+            correct_output = row[-1]
             predicted_outputs.append(predicted_output)
-            if correct_output == predicted_output:
-                correct += 1
-        return correct / len(test_data), predicted_outputs
+            error += abs(predicted_output - correct_output)
+        return error / len(test_data), predicted_outputs
 
 
 def read_file(filename):
@@ -181,37 +169,33 @@ def read_test_data():
 def get_n_inputs_outputs(data):
     n_inputs = len(data[0]) - 1
 
-    outputs_classes = {}
-
-    outputs_classes[0] = 0
-
-
+    outputs_classes = {0: 0}
     return n_inputs, outputs_classes
 
 
-def plot_data(data, outputs_classes, predicted_outputs):
+def plot_data(data, predicted_outputs):
     import matplotlib.pyplot as plt
     colors = ['red', 'blue','green']
-    # print(data)
-    # print("michal123456")
-    # print(outputs_classes)
-    #print("michal123456")
-    #print("a")
-    #print(predicted_outputs)
-    # print("michal123456")
-    # print(predicted_outputs)
-    i=0
-    for row in data :
+
+    for i, row in enumerate(data):
         plt.scatter(row[0], row[1], c=colors[0])
         plt.scatter(row[0], predicted_outputs[i], c=colors[1])
-        #print(predicted_outputs[i])
-        i+=1
-    # for row, predicted in zip(data, predicted_outputs) :
-    #     plt.scatter(row[0], row[1], c=colors[1])
-    # for row, predicted in zip(data, predicted_outputs) :
-    #     plt.scatter(row[0], row[1], c=colors[2])
-    #
+
     plt.show()
+
+
+def normalize(inputs):
+    max = -float('inf')
+    min = float('inf')
+    for row in inputs:
+        if max < row[1]:
+            max = row[1]
+        if min > row[1]:
+            min = row[1]
+    for row in inputs:
+        row[1] = (row[1] - min) / (max - min)
+
+    return inputs
 
 
 def main():
@@ -221,16 +205,15 @@ def main():
     parser.add_argument('-n', '--neurons', nargs='+', type=int, help='<Required> Number of neurons for each layer',
                         required=True)
 
-    # TODO: modify the algo so that it handles regression as well, not only classification.
-    parser.add_argument('--regression', dest='regression', action='store_true')
-    parser.add_argument('--classification', dest='regression', action='store_false')
-    parser.set_defaults(feature=False)
-
     parser.add_argument('-train_filename')
     parser.add_argument('-test_filename')
 
     parser.add_argument('-v', '--visualize_every', type=int,
                         help='<Required> How ofter (every n iterations) print neuron\'s weights.',
+                        required=True)
+
+    parser.add_argument('-e', '--number_of_epochs', type=int,
+                        help='<Required> Number of epochs (iterations) for the NN to run',
                         required=True)
 
     args = parser.parse_args()
@@ -239,19 +222,8 @@ def main():
     random.seed(1)
 
     training_set_inputs = read_file(args.train_filename)
-    #print(training_set_inputs)
-    max = -float('inf')
-    min = float('inf')
-    for row in training_set_inputs:
-        if (max < row[1]):
-            max = row[1]
-        if (min > row[1]):
-            min = row[1]
-    #print(max)
-    for row in training_set_inputs:
-        row[1]= (row[1]-min)/(max-min)
-    #print(training_set_inputs)
-    #return
+    training_set_inputs = normalize(training_set_inputs)
+
     # Should calculate the number of inputs and outputs from the data.
     n_inputs, outputs_classes = get_n_inputs_outputs(training_set_inputs)
     n_outputs = len(outputs_classes)
@@ -270,33 +242,20 @@ def main():
     neural_network.print_weights()
 
     # Train neural network.
-    neural_network.train(training_set_inputs, 0.3, 4, outputs_classes, args.visualize_every)
+    neural_network.train(training_set_inputs, 0.3, args.number_of_epochs, args.visualize_every)
 
     print("Stage 2) New synaptic weights after training: ")
     # TODO: save weights to file and read them from file during initialization to 'restart' training.
     neural_network.print_weights()
 
-
     # Test the neural network.
     testing_set_inputs = read_file(args.test_filename)
+    testing_set_inputs = normalize(testing_set_inputs)
 
-    max = -float('inf')
-    min = float('inf')
-    for row in testing_set_inputs:
-        if (max < row[1]):
-            max = row[1]
-        if (min > row[1]):
-            min = row[1]
-    #print(max)
-    for row in testing_set_inputs:
-        row[1]= (row[1]-min)/(max-min)
-
-
-    accuracy, predicted_outputs = neural_network.test(outputs_classes, testing_set_inputs)
+    accuracy, predicted_outputs = neural_network.test(testing_set_inputs)
     print("accuracy: %.3f" % accuracy)
 
-    # Plot test data. Dots with black egdes are the ones that didn't get classified correctly.
-    plot_data(testing_set_inputs, outputs_classes, predicted_outputs)
+    plot_data(testing_set_inputs, predicted_outputs)
 
 
 if __name__ == "__main__":

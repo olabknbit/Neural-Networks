@@ -195,11 +195,6 @@ def main():
     parser.add_argument('-n', '--neurons', nargs='+', type=int, help='<Required> Number of neurons for each layer',
                         required=True)
 
-    # TODO: modify the algo so that it handles regression as well, not only classification.
-    parser.add_argument('--regression', dest='regression', action='store_true')
-    parser.add_argument('--classification', dest='regression', action='store_false')
-    parser.set_defaults(feature=False)
-
     parser.add_argument('-train_filename')
     parser.add_argument('-test_filename')
 
