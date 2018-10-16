@@ -210,7 +210,7 @@ def plot_data(data, predicted_outputs, training_data):
     for row in training_data:
         plt.scatter(row[0], row[1], c=colors[2])
 
-    plt.show()git a
+    plt.show()
 
 
 def main():
