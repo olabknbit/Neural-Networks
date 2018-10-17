@@ -204,6 +204,3 @@ def main(train_filename, test_filename, neurons, number_of_epochs, visualize_eve
 
     plot_data(testing_set_inputs, predicted_outputs, training_set_inputs)
 
-
-if __name__ == "__main__":
-    main()
