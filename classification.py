@@ -16,7 +16,7 @@ def activate(weights, inputs):
 def sigmoid(activation):
     return 1.0 / (1.0 + exp(-activation))
 
-# TODO nie tangens hip do porownania
+# TODO nie tangens hiperboliczny do porownania (inna funkcja)
 # TODO: Each transfer function should have it's derivative.
 # Derivative of transfer function
 def sigmoid_derivative(output):
@@ -156,45 +156,73 @@ def read_file(filename):
         return rows
 
 
-def main():
-    import argparse
-
-    parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('-n', '--neurons', nargs='+', type=int, help='<Required> Number of neurons for each layer',
-                        required=False)
-
-    parser.add_argument('--regression', dest='regression', action='store_true')
-    parser.add_argument('--classification', dest='regression', action='store_false')
-    parser.set_defaults(regression=False)
-
-    parser.add_argument('-train_filename', help='Name of a file containing training data', required=True)
-    parser.add_argument('-test_filename', help='Name of a file containing testing data', required=True)
-
-    parser.add_argument('-v', '--visualize_every', type=int,
-                        help='How ofter (every n iterations) print neuron\'s weights.',
-                        required=False, default=1000)
-
-    parser.add_argument('--seed', type=int, help='Random seed int', required=False, default=1)
-
-    parser.add_argument('-e', '--number_of_epochs', type=int, help='Number of epochs (iterations) for the NN to run',
-                        required=False, default=10000)
-
-    parser.add_argument('--l_rate', type=float, help='Learning rate', required=False, default=0.001)
-
-    args = parser.parse_args()
-
-    # Seed the random number generator
-    random.seed(args.seed)
-
-    if args.regression:
-        import regression
-        regression.main(args.train_filename, args.test_filename, args.neurons, args.number_of_epochs,
-                        args.visualize_every, args.l_rate)
-    else:
-        import classification
-        classification.main(args.train_filename, args.test_filename, args.neurons, args.number_of_epochs,
-                            args.visualize_every, args.l_rate)
+def read_train_data():
+    return read_file('projekt1/classification/data.simple.train.100.csv')
 
 
-if __name__ == "__main__":
-    main()
+def read_test_data():
+    return read_file('projekt1/classification/data.simple.test.100.csv')
+
+
+# Return number of features - n_inputs for NN and outoput_classes which is a map like {3: 0, 2: 1:, 5: 2},
+# where each key represents a class (as they occur in original data, eg, here class 3, 2 and 5) and indices they have
+#  in NN.
+def get_n_inputs_outputs(data):
+    n_inputs = len(data[0]) - 1
+    outputs = set()
+    for row in data:
+        outputs.add(row[-1])
+    outputs_classes = {}
+    for i, outpt in enumerate(outputs):
+        outputs_classes[outpt] = i
+    return n_inputs, outputs_classes
+
+
+def plot_data(data, outputs_classes, predicted_outputs):
+    import matplotlib.pyplot as plt
+    colors = ['red', 'blue']
+
+    for row, predicted in zip(data, predicted_outputs) :
+        edgecolor = 'none'
+        output_class = outputs_classes[row[2]]
+        if predicted != output_class:
+            edgecolor = 'black'
+        plt.scatter(row[0], row[1], c=colors[output_class], edgecolors=edgecolor)
+    plt.show()
+
+
+def main(train_filename, test_filename, neurons, number_of_epochs, visualize_every, l_rate):
+    training_set_inputs, testing_set_inputs = read_file(train_filename), read_file(test_filename)
+
+    # Should calculate the number of inputs and outputs from the data.
+    n_inputs, outputs_classes = get_n_inputs_outputs(training_set_inputs)
+    n_outputs = len(outputs_classes)
+
+    # Combine the layers to create a neural network
+    layers = []
+    n_in = n_inputs
+    for n_neurons in neurons:
+        layers.append(NeuronLayer(n_in, n_neurons))
+        print(n_in, n_neurons)
+        n_in = n_neurons
+    layers.append(NeuronLayer(n_in, n_outputs))
+    print(n_in, n_outputs)
+
+    neural_network = NeuralNetwork(layers)
+
+    print("Stage 1) Random starting synaptic weights: ")
+    neural_network.print_weights()
+
+    # Train neural network.
+    neural_network.train(training_set_inputs, l_rate, number_of_epochs, outputs_classes, visualize_every)
+
+    print("Stage 2) New synaptic weights after training: ")
+    # TODO: save weights to file and read them from file during initialization to 'restart' training.
+    neural_network.print_weights()
+
+    # Test the neural network.
+    accuracy, predicted_outputs = neural_network.test(outputs_classes, testing_set_inputs)
+    print("accuracy: %.3f" % accuracy)
+
+    # Plot test data. Dots with black egdes are the ones that didn't get classified correctly.
+    plot_data(testing_set_inputs, outputs_classes, predicted_outputs)

@@ -213,30 +213,8 @@ def plot_data(data, predicted_outputs, training_data):
     plt.show()
 
 
-def main():
-    import argparse
-
-    parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('-n', '--neurons', nargs='+', type=int, help='<Required> Number of neurons for each layer',
-                        required=True)
-
-    parser.add_argument('-train_filename')
-    parser.add_argument('-test_filename')
-
-    parser.add_argument('-v', '--visualize_every', type=int,
-                        help='<Required> How ofter (every n iterations) print neuron\'s weights.',
-                        required=True)
-
-    parser.add_argument('-e', '--number_of_epochs', type=int,
-                        help='<Required> Number of epochs (iterations) for the NN to run',
-                        required=True)
-
-    args = parser.parse_args()
-
-    # Seed the random number generator
-    random.seed(1)
-
-    training_set_inputs = read_file(args.train_filename)
+def main(train_filename, test_filename, neurons, number_of_epochs, visualize_every, l_rate):
+    training_set_inputs, testing_set_inputs = read_file(train_filename), read_file(test_filename)
 
     # Should calculate the number of inputs and outputs from the data.
     n_inputs, outputs_classes = get_n_inputs_outputs(training_set_inputs)
@@ -245,7 +223,7 @@ def main():
     # Combine the layers to create a neural network
     layers = []
     n_in = n_inputs
-    for n_neurons in args.neurons:
+    for n_neurons in neurons:
         layers.append(NeuronLayer(n_in, n_neurons))
         n_in = n_neurons
     layers.append(NeuronLayer(n_in, n_outputs))
@@ -256,15 +234,13 @@ def main():
     neural_network.print_weights()
 
     # Train neural network.
-    neural_network.train(training_set_inputs, 0.01, args.number_of_epochs, args.visualize_every)
+    neural_network.train(training_set_inputs, l_rate, number_of_epochs, visualize_every)
 
     print("Stage 2) New synaptic weights after training: ")
     # TODO: save weights to file and read them from file during initialization to 'restart' training.
     neural_network.print_weights()
 
     # Test the neural network.
-    testing_set_inputs = read_file(args.test_filename)
-
     accuracy, predicted_outputs = neural_network.test(testing_set_inputs)
     print("accuracy: %.3f" % accuracy)
 
