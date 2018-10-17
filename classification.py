@@ -164,28 +164,27 @@ def plot_data(data, outputs_classes, predicted_outputs):
     plt.show()
 
 
+def initialize_network(neurons, n_inputs, outputs_classes):
+    # Combine the layers to create a neural network
+    layers = []
+    n_outputs = len(outputs_classes)
+    n_in = n_inputs
+    for n_neurons in neurons:
+        layers.append(NeuronLayer(n_in, n_neurons))
+        n_in = n_neurons
+    layers.append(NeuronLayer(n_in, n_outputs))
+
+    from util import sigmoid, sigmoid_derivative
+    return NeuralNetwork(layers, sigmoid, sigmoid_derivative)
+
+
 def main(train_filename, test_filename, neurons, number_of_epochs, visualize_every, l_rate):
     training_set_inputs, testing_set_inputs = read_file(train_filename), read_file(test_filename)
 
     # Should calculate the number of inputs and outputs from the data.
     n_inputs, outputs_classes = get_n_inputs_outputs(training_set_inputs)
-    n_outputs = len(outputs_classes)
 
-    # Combine the layers to create a neural network
-    layers = []
-    n_in = n_inputs
-    for n_neurons in neurons:
-        layers.append(NeuronLayer(n_in, n_neurons))
-        print(n_in, n_neurons)
-        n_in = n_neurons
-    layers.append(NeuronLayer(n_in, n_outputs))
-    print(n_in, n_outputs)
-
-    from util import sigmoid, sigmoid_derivative
-    neural_network = NeuralNetwork(layers, sigmoid, sigmoid_derivative)
-
-    print("Stage 1) Random starting synaptic weights: ")
-    neural_network.print_weights()
+    neural_network = initialize_network(neurons, n_inputs, outputs_classes)
 
     # Train neural network.
     neural_network.train(training_set_inputs, l_rate, number_of_epochs, outputs_classes, visualize_every)

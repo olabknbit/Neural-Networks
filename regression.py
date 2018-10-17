@@ -169,15 +169,10 @@ def plot_data(data, predicted_outputs, training_data):
     plt.show()
 
 
-def main(train_filename, test_filename, neurons, number_of_epochs, visualize_every, l_rate):
-    training_set_inputs, testing_set_inputs = read_file(train_filename), read_file(test_filename)
-
-    # Should calculate the number of inputs and outputs from the data.
-    n_inputs, outputs_classes = get_n_inputs_outputs(training_set_inputs)
-    n_outputs = len(outputs_classes)
-
+def initialize_network(neurons, n_inputs, outputs_classes):
     # Combine the layers to create a neural network
     layers = []
+    n_outputs = len(outputs_classes)
     n_in = n_inputs
     for n_neurons in neurons:
         layers.append(NeuronLayer(n_in, n_neurons))
@@ -185,11 +180,16 @@ def main(train_filename, test_filename, neurons, number_of_epochs, visualize_eve
     layers.append(NeuronLayer(n_in, n_outputs))
 
     from util import sigmoid, sigmoid_derivative
+    return NeuralNetwork(layers, sigmoid, sigmoid_derivative)
 
-    neural_network = NeuralNetwork(layers, sigmoid, sigmoid_derivative)
 
-    print("Stage 1) Random starting synaptic weights: ")
-    neural_network.print_weights()
+def main(train_filename, test_filename, neurons, number_of_epochs, visualize_every, l_rate):
+    training_set_inputs, testing_set_inputs = read_file(train_filename), read_file(test_filename)
+
+    # Should calculate the number of inputs and outputs from the data.
+    n_inputs, outputs_classes = get_n_inputs_outputs(training_set_inputs)
+
+    neural_network = initialize_network(neurons, n_inputs, outputs_classes)
 
     # Train neural network.
     neural_network.train(training_set_inputs, l_rate, number_of_epochs, visualize_every)
@@ -203,4 +203,3 @@ def main(train_filename, test_filename, neurons, number_of_epochs, visualize_eve
     print("accuracy: %.3f" % accuracy)
 
     plot_data(testing_set_inputs, predicted_outputs, training_set_inputs)
-
