@@ -1,49 +1,8 @@
-from numpy import exp, random
+from numpy import random
 import numpy as np
 
 
-# Activation function - for weights and inputs returns their dot product.
-def activate(weights, inputs):
-    # Add bias.
-    activation = weights[-1]
-    for weight, input in zip(weights[:-1], inputs):
-        activation += weight * input
-    return activation
-
-
-def linear(activation):
-    return activation
-
-
-def linear_derivative(_):
-    return 1
-
-#
-# def reLu(activation):
-#     return max(0, activation)
-#
-#
-# def reLu_derivative(output):
-#     return 0 if output < 0 else 1
-
-
-# TODO: should be implemented so that different (tanh, logistic, etc) transfer functions can be simply interchangeable.
-# Sigmoid transfer function
-def sigmoid(activation):
-    return 1.0 / (1.0 + exp(-activation))
-    # return activation * 0.3
-    # return 1.0*(exp(activation)-exp(-activation))/(0.0+exp(activation)+exp(-activation))
-
-
-# TODO: Each transfer function should have it's derivative.
-# Derivative of transfer function
-def sigmoid_derivative(output):
-    return output * (1.0 - output)
-    # return 0.3
-    # return 1 - sigmoid(output)
-
-
-class NeuronLayer():
+class NeuronLayer:
     def __init__(self, n_inputs, n_neurons):
         # Create a layer with n_neurons neurons, each with n_inputs + 1 inputs (the +1 is for the bias).
         # TODO - biases should be settable.
@@ -54,21 +13,22 @@ class NeuronLayer():
         return len(self.neurons[0]['weights'])
 
     # Calculate what are the outputs of the layer for the given inputs.
-    def forward_propagate(self, inputs):
+    def forward_propagate(self, inputs, activation_f):
+        from util import activate
         outputs = []
         for neuron in self.neurons:
             activation = activate(neuron['weights'], inputs)
-            neuron['output'] = sigmoid(activation)
+            neuron['output'] = activation_f(activation)
             outputs.append(neuron['output'])
 
         return outputs
 
-    def backward_propagate(self, next_layer):
+    def backward_propagate(self, next_layer, activation_f_derivative):
         for i, neuron_i in enumerate(self.neurons):
             error = 0.0
             for neuron_j in next_layer:
                 error += (neuron_j['weights'][i] * neuron_j['delta'])
-            neuron_i['delta'] = error * sigmoid_derivative(neuron_i['output'])
+            neuron_i['delta'] = error * activation_f_derivative(neuron_i['output'])
         return self.neurons
 
     def update_weights(self, inputs, l_rate):
@@ -79,6 +39,7 @@ class NeuronLayer():
         return self.neurons
 
     def linear_propagate(self, inputs):
+        from util import activate, linear
         outputs = []
         for neuron in self.neurons:
             activation = activate(neuron['weights'], inputs)
@@ -89,15 +50,17 @@ class NeuronLayer():
 
 
 class NeuralNetwork():
-    def __init__(self, layers):
+    def __init__(self, layers, activation_f, activation_f_derivative):
         self.layers = layers
+        self.activation_f = lambda x: activation_f(x)
+        self.activation_f_derivative = lambda x: activation_f_derivative(x)
 
     # Pipe data row through the network and get final outputs.
     def forward_propagate(self, row):
         outputs = row
         for layer in self.layers[:-1]:
             inputs = outputs
-            outputs = layer.forward_propagate(inputs)
+            outputs = layer.forward_propagate(inputs, self.activation_f)
 
         inputs = outputs
         outputs = self.layers[-1].linear_propagate(inputs)
@@ -106,6 +69,7 @@ class NeuralNetwork():
 
     # Calculate 'delta' for every neuron. This will then be used to update the weights of the neurons.
     def backward_propagate(self, expected_val):
+        from util import linear_derivative
         # Update last layer's (output layer's) 'delta' field.
         # This field is needed to calculate 'delta' fields in previous (closer to input layer) layers,
         # so then we can update the weights.
@@ -117,7 +81,7 @@ class NeuralNetwork():
         # Update other layers' 'delta' field, so we can later update wights based on value of this field.
         next_layer = layer
         for layer in reversed(self.layers[:-1]):
-            next_layer = layer.backward_propagate(next_layer)
+            next_layer = layer.backward_propagate(next_layer, self.activation_f_derivative)
 
     def update_weights(self, row, l_rate):
         layer = self.layers[0]
@@ -181,14 +145,6 @@ def read_file(filename):
         return rows
 
 
-def read_train_data():
-    return read_file('projekt1/classification/data.simple.train.100.csv')
-
-
-def read_test_data():
-    return read_file('projekt1/classification/data.simple.test.100.csv')
-
-
 # Return number of features - n_inputs for NN and outoput_classes which is a map like {3: 0, 2: 1:, 5: 2},
 # where each key represents a class (as they occur in original data, eg, here class 3, 2 and 5) and indices they have
 #  in NN.
@@ -228,7 +184,9 @@ def main(train_filename, test_filename, neurons, number_of_epochs, visualize_eve
         n_in = n_neurons
     layers.append(NeuronLayer(n_in, n_outputs))
 
-    neural_network = NeuralNetwork(layers)
+    from util import sigmoid, sigmoid_derivative
+
+    neural_network = NeuralNetwork(layers, sigmoid, sigmoid_derivative)
 
     print("Stage 1) Random starting synaptic weights: ")
     neural_network.print_weights()
