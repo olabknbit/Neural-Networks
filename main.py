@@ -24,6 +24,10 @@ def main():
 
     parser.add_argument('--seed', type=int, help='Random seed int', required=False, default=1)
 
+    parser.add_argument('--biases', dest='biases', action='store_true')
+    parser.add_argument('--no_biases', dest='biases', action='store_false')
+    parser.set_defaults(biases=True)
+
     args = parser.parse_args()
 
     # Seed the random number generator
@@ -44,11 +48,11 @@ def main():
     if args.action == 'regression':
         import regression
         regression.main(args.train_filename, args.test_filename, args.create_nn, args.save_nn, args.read_nn,
-                        args.number_of_epochs, args.visualize_every, args.l_rate)
+                        args.number_of_epochs, args.visualize_every, args.l_rate, args.biases)
     elif args.action == 'classification':
         import classification
         classification.main(args.train_filename, args.test_filename, args.create_nn, args.save_nn, args.read_nn,
-                        args.number_of_epochs, args.visualize_every, args.l_rate)
+                        args.number_of_epochs, args.visualize_every, args.l_rate, args.biases)
     else:
         print('Sorry, first positional argument has to be either \'regression\' or \'classification\'.')
         exit(1)

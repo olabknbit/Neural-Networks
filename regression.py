@@ -3,7 +3,7 @@ import numpy as np
 
 def get_random_naurons(n_inputs, n_neurons):
     from numpy import random
-    return [{'weights': [random.random() * 0.3 for _ in range(n_inputs + 1)]} for _ in range(n_neurons)]
+    return [{'weights': [random.random() * 0.3 for _ in range(n_inputs)]} for _ in range(n_neurons)]
 
 
 class NeuronLayer:
@@ -170,21 +170,22 @@ def plot_data(data, predicted_outputs, training_data=None):
     plt.show()
 
 
-def initialize_network(neurons, n_inputs, outputs_classes):
+def initialize_network(neurons, n_inputs, outputs_classes, biases):
     # Combine the layers to create a neural network
     layers = []
     n_outputs = len(outputs_classes)
     n_in = n_inputs
+    bias = 1 if biases else 0
     for n_neurons in neurons:
-        layers.append(NeuronLayer(get_random_naurons(n_in, n_neurons)))
+        layers.append(NeuronLayer(get_random_naurons(n_in + bias, n_neurons)))
         n_in = n_neurons
-    layers.append(NeuronLayer(get_random_naurons(n_in, n_outputs)))
+    layers.append(NeuronLayer(get_random_naurons(n_in + bias, n_outputs)))
 
     from util import sigmoid, sigmoid_derivative
     return NeuralNetwork(layers, sigmoid, sigmoid_derivative)
 
 
-def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_epochs, visualize_every, l_rate):
+def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_epochs, visualize_every, l_rate, biases):
     from util import read_network_layers_from_file, write_network_to_file
     neural_network = None
     training_set_inputs = None
@@ -194,7 +195,7 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
         if create_nn is not None:
             # Calculate the number of inputs and outputs from the data.
             n_inputs, outputs_classes = get_n_inputs_outputs(training_set_inputs)
-            neural_network = initialize_network(create_nn, n_inputs, outputs_classes)
+            neural_network = initialize_network(create_nn, n_inputs, outputs_classes, biases)
         else:
             from util import sigmoid, sigmoid_derivative
             layers, _ = read_network_layers_from_file(read_nn)
