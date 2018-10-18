@@ -37,3 +37,21 @@ def sigmoid(activation):
 # Derivative of transfer function
 def sigmoid_derivative(output):
     return output * (1.0 - output)
+
+
+def write_network_to_file(filename, neural_network):
+    with open(filename, 'w') as file:
+        if hasattr(neural_network, 'output_classes'):
+            file.write("%s\n" % neural_network.output_classes)
+        else:
+            file.write("\n")
+        file.writelines(["%s\n" % l for l in neural_network.get_weights()])
+
+
+def read_network_layers_from_file(filename):
+    with open(filename, 'r') as file:
+        rows = file.readlines()
+        layers = [eval(row) for row in rows[1:]]
+        output_classes = rows[0]
+        return layers, output_classes
+

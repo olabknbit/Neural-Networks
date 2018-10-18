@@ -1,12 +1,17 @@
 from numpy import random
 
 
+def get_random_naurons(n_inputs, n_neurons):
+    from numpy import random
+    return [{'weights': [random.random() * 0.3 for _ in range(n_inputs + 1)]} for _ in range(n_neurons)]
+
+
 class NeuronLayer:
-    def __init__(self, n_inputs, n_neurons):
+    def __init__(self, neurons):
         # Create a layer with n_neurons neurons, each with n_inputs + 1 inputs (the +1 is for the bias).
         # TODO - biases should be settable.
         # random numbers from range [0; 0.3) are proven to be best
-        self.neurons = [{'weights': [random.random() * 0.3 for _ in range(n_inputs + 1)]} for _ in range(n_neurons)]
+        self.neurons = neurons
 
     def __len__(self):
         return len(self.neurons[0]['weights'])
@@ -38,10 +43,11 @@ class NeuronLayer:
 
 
 class NeuralNetwork:
-    def __init__(self, layers, activation_f, activation_f_derivative):
+    def __init__(self, layers, activation_f, activation_f_derivative, output_classes):
         self.layers = layers
         self.activation_f = lambda x: activation_f(x)
         self.activation_f_derivative = lambda x: activation_f_derivative(x)
+        self.output_classes = output_classes
 
     # Pipe data row through the network and get final outputs.
     def forward_propagate(self, row):
@@ -78,7 +84,7 @@ class NeuralNetwork:
             inputs = [neuron['output'] for neuron in previous_layer]
             previous_layer = layer.update_weights(inputs, l_rate)
 
-    def train(self, data_input, l_rate, n_iter, output_classes, visualize_every):
+    def train(self, data_input, l_rate, n_iter, visualize_every):
         for epoch in range(n_iter):
             iter_error = 0.0
             for row in data_input:
@@ -89,8 +95,8 @@ class NeuralNetwork:
 
                 # The expected values are 0s for all neurons except for the ith,
                 # where i is the class that is the output.
-                expected = [0.0 for _ in range(len(output_classes))]
-                expected[output_classes[row[-1]]] = 1.0
+                expected = [0.0 for _ in range(len(self.output_classes))]
+                expected[self.output_classes[row[-1]]] = 1.0
 
                 iter_error += sum([(expected_i - output_i) ** 2 for expected_i, output_i in zip(expected, outputs)])
                 self.backward_propagate(expected)
@@ -98,24 +104,20 @@ class NeuralNetwork:
                 self.update_weights(row, l_rate)
             if epoch % visualize_every == 0:
                 print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, iter_error))
-                self.print_weights()
 
-    def print_weights(self):
-        for i, layer in enumerate(self.layers):
-            n_neurons = len(layer) - 1
-            print("    Layer %d (%d neurons): " % (i, n_neurons))
-            print(layer.neurons)
+    def get_weights(self):
+        return [str(layer.neurons) for layer in self.layers]
 
     def predict(self, row):
         outputs = self.forward_propagate(row[:-1])
         return outputs.index(max(outputs))
 
-    def test(self, output_classes, test_data):
+    def test(self, test_data):
         predicted_outputs = []
         correct = 0
         for row in test_data:
             predicted_output = self.predict(row)
-            correct_output = output_classes[row[-1]]
+            correct_output = self.output_classes[row[-1]]
             predicted_outputs.append(predicted_output)
             if correct_output == predicted_output:
                 correct += 1
@@ -153,7 +155,7 @@ def get_n_inputs_outputs(data):
 
 def plot_data(data, outputs_classes, predicted_outputs):
     import matplotlib.pyplot as plt
-    colors = ['red', 'blue']
+    colors = ['red', 'blue', 'green', 'yellow', 'pink']
 
     for row, predicted in zip(data, predicted_outputs) :
         edgecolor = 'none'
@@ -170,32 +172,48 @@ def initialize_network(neurons, n_inputs, outputs_classes):
     n_outputs = len(outputs_classes)
     n_in = n_inputs
     for n_neurons in neurons:
-        layers.append(NeuronLayer(n_in, n_neurons))
+        layers.append(NeuronLayer(get_random_naurons(n_in, n_neurons)))
         n_in = n_neurons
-    layers.append(NeuronLayer(n_in, n_outputs))
+    layers.append(NeuronLayer(get_random_naurons(n_in, n_outputs)))
 
     from util import sigmoid, sigmoid_derivative
-    return NeuralNetwork(layers, sigmoid, sigmoid_derivative)
+    return NeuralNetwork(layers, sigmoid, sigmoid_derivative, outputs_classes)
 
 
-def main(train_filename, test_filename, neurons, number_of_epochs, visualize_every, l_rate):
-    training_set_inputs, testing_set_inputs = read_file(train_filename), read_file(test_filename)
+def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_epochs, visualize_every, l_rate):
+    from util import write_network_to_file, read_network_layers_from_file
 
-    # Should calculate the number of inputs and outputs from the data.
-    n_inputs, outputs_classes = get_n_inputs_outputs(training_set_inputs)
+    neural_network = None
+    outputs_classes = None
+    if train_filename is not None:
+        training_set_inputs = read_file(train_filename)
 
-    neural_network = initialize_network(neurons, n_inputs, outputs_classes)
+        if create_nn is not None:
+            # Calculate the number of inputs and outputs from the data.
+            n_inputs, outputs_classes = get_n_inputs_outputs(training_set_inputs)
+            neural_network = initialize_network(create_nn, n_inputs, outputs_classes)
+        else:
+            from util import sigmoid, sigmoid_derivative
+            layers, outputs_classes = read_network_layers_from_file(read_nn)
+            neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], sigmoid, sigmoid_derivative, outputs_classes)
 
-    # Train neural network.
-    neural_network.train(training_set_inputs, l_rate, number_of_epochs, outputs_classes, visualize_every)
+        # Train neural network.
+        neural_network.train(training_set_inputs, l_rate, number_of_epochs, visualize_every)
 
-    print("Stage 2) New synaptic weights after training: ")
-    # TODO: save weights to file and read them from file during initialization to 'restart' training.
-    neural_network.print_weights()
+        if save_nn is not None:
+            write_network_to_file(save_nn, neural_network)
 
-    # Test the neural network.
-    accuracy, predicted_outputs = neural_network.test(outputs_classes, testing_set_inputs)
-    print("accuracy: %.3f" % accuracy)
+    if test_filename is not None:
+        testing_set_inputs = read_file(test_filename)
 
-    # Plot test data. Dots with black egdes are the ones that didn't get classified correctly.
-    plot_data(testing_set_inputs, outputs_classes, predicted_outputs)
+        if neural_network is None:
+            from util import sigmoid, sigmoid_derivative
+            layers, outputs_classes = read_network_layers_from_file(read_nn)
+            neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], sigmoid, sigmoid_derivative, outputs_classes)
+
+        # Test the neural network.
+        accuracy, predicted_outputs = neural_network.test(testing_set_inputs)
+        print("accuracy: %.3f" % accuracy)
+
+        # Plot test data. Dots with black egdes are the ones that didn't get classified correctly.
+        plot_data(testing_set_inputs, outputs_classes, predicted_outputs)
