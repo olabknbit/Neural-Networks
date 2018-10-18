@@ -3,14 +3,12 @@ from numpy import random
 
 def get_random_naurons(n_inputs, n_neurons):
     from numpy import random
+    # random numbers from range [0; 0.3) are proven to be best
     return [{'weights': [random.random() * 0.3 for _ in range(n_inputs)]} for _ in range(n_neurons)]
 
 
 class NeuronLayer:
     def __init__(self, neurons):
-        # Create a layer with n_neurons neurons, each with n_inputs + 1 inputs (the +1 is for the bias).
-        # TODO - biases should be settable.
-        # random numbers from range [0; 0.3) are proven to be best
         self.neurons = neurons
 
     def __len__(self):
@@ -172,6 +170,7 @@ def initialize_network(neurons, n_inputs, outputs_classes, biases):
     n_outputs = len(outputs_classes)
     n_in = n_inputs
     bias = 1 if biases else 0
+    # Create a layer with n_neurons neurons, each with n_inputs.
     for n_neurons in neurons:
         layers.append(NeuronLayer(get_random_naurons(n_in + bias, n_neurons)))
         n_in = n_neurons

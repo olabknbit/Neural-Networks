@@ -1,4 +1,5 @@
 from numpy import random
+# TODO: refactor neural network into separate file for clarity and DRY
 
 
 def main():
