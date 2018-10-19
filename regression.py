@@ -167,6 +167,32 @@ def plot_data(data, predicted_outputs, training_data=None):
 
     plt.show()
 
+def print_data(data, predicted_outputs):
+    Error = 0.0
+    SE = 0.0
+    RAEDivider = 0.0
+    RRAEDivider = 0.0
+    AvgData = sum(predicted_outputs)/len(predicted_outputs)
+
+    for i, row in enumerate(data):
+        Error += abs(predicted_outputs[i] - row[1])
+        SE += (predicted_outputs[i] - row[1])**2
+        RAEDivider += abs(AvgData - row[1])
+        RRAEDivider += (AvgData - row[1])**2
+
+    AvgError = 1.0 * Error/(1.0*len(data))
+    MSE = 1.0 * SE/(1.0*len(data))
+    RMSE = MSE**0.5
+    RAE = Error / RAEDivider
+    RRAE = SE / RRAEDivider
+
+    print('Error = %.3f' %(Error))
+    print('AvgError = %.3f' %(AvgError))
+    print('MSE = %.3f' %(MSE))
+    print('RMSE = %.3f' %(RMSE))
+    print('RAE = %.3f' %(RAE))
+    print('RRAE = %.3f' %(RRAE))
+
 
 def initialize_network(neurons, n_inputs, outputs_classes, biases):
     # Combine the layers to create a neural network
@@ -217,4 +243,6 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
         accuracy, predicted_outputs = neural_network.test(testing_set_inputs)
         print("accuracy: %.3f" % accuracy)
 
+
+        print_data(testing_set_inputs, predicted_outputs)
         plot_data(testing_set_inputs, predicted_outputs, training_set_inputs)
