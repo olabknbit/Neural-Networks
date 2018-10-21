@@ -193,6 +193,17 @@ def print_data(data, predicted_outputs):
     print('RAE = %.3f' %(RAE))
     print('RRAE = %.3f' %(RRAE))
 
+    err = 0.0
+    for i,pred in enumerate(predicted_outputs):
+        min = float('inf')
+
+        for j,row in enumerate(data):
+            if(min > abs(row[1]- pred)):
+                min = abs(row[1]- pred)
+        err += min
+
+    print('Sum of distances = %.3f' %(err))
+    print('Avg distance = %.3f' %(err/len(data)))
 
 def initialize_network(neurons, n_inputs, outputs_classes, biases):
     # Combine the layers to create a neural network
