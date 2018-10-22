@@ -155,12 +155,36 @@ def plot_data(data, outputs_classes, predicted_outputs):
     import matplotlib.pyplot as plt
     colors = ['red', 'blue', 'green', 'yellow', 'pink']
 
-    for row, predicted in zip(data, predicted_outputs) :
-        edgecolor = 'none'
-        output_class = outputs_classes[row[2]]
+    datas = []
+    for _ in range(len(outputs_classes)):
+        datas.append(([[], []], [[], []]))
+
+    for row, predicted in zip(data, predicted_outputs):
+        i = row[2]
+        output_class = outputs_classes[i]
+        correct, incorrect = datas[output_class]
         if predicted != output_class:
-            edgecolor = 'black'
-        plt.scatter(row[0], row[1], c=colors[output_class], edgecolors=edgecolor)
+            x, y = incorrect
+            x.append(row[0])
+            y.append(row[1])
+        else:
+            x, y = correct
+            x.append(row[0])
+            y.append(row[1])
+
+    for i, c in enumerate(datas):
+        correct, incorrect = c
+        xc, yc = correct
+        xi, yi = incorrect
+        len_c = len(xc)
+        len_i = len(xi)
+        len_all = len_c + len_i
+        label_c = 'correct + %d/%d + (%f)' % (len_c, len_all, (len_c / len_all))
+        label_i = 'incorrect + %d/%d + (%f)' % (len_i, len_all, (len_i / len_all))
+        plt.plot(xc, yc, linestyle='none', marker='o', markerfacecolor=colors[i], markeredgecolor='none', label=label_c)
+        plt.plot(xi, yi, linestyle='none', marker='o', markerfacecolor=colors[i], markeredgecolor='black', label=label_i)
+
+    plt.legend()
     plt.show()
 
 
