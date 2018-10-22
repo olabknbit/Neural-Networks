@@ -109,6 +109,11 @@ class NeuralNetwork():
                 self.backward_propagate(expected)
                 self.update_weights(row, l_rate)
             if epoch % visualize_every == 0:
+                import visualize
+                from util import read_network_layers_from_file, write_network_to_file
+                write_network_to_file("temp", self)
+                layers, _ = read_network_layers_from_file("temp")
+                visualize.main(layers, [], str(epoch))
                 print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, iter_error))
 
     def get_weights(self):
@@ -198,9 +203,10 @@ def print_data(data, predicted_outputs):
         min = float('inf')
 
         for j,row in enumerate(data):
-            if(min > (abs(row[1]- pred)**2+abs(row[0]- data[i][0] )**2)**0.5):
-                min = abs(row[1]- pred)
+            if(min > ((row[1]- pred)**2 + (row[0]- data[i][0])**2)**0.5):
+                min = ((row[1]- pred)**2 + (row[0]- data[i][0])**2)**0.5
         err += min
+
 
     print('Sum of distances = %.3f' %(err))
     print('Avg distance = %.3f' %(err/len(data)))
