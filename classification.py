@@ -151,10 +151,10 @@ def get_n_inputs_outputs(data):
     return n_inputs, outputs_classes
 
 
-def plot_data(data, outputs_classes, predicted_outputs):
+def plot_data(data, outputs_classes, predicted_outputs, filename):
     import matplotlib.pyplot as plt
     colors = ['red', 'blue', 'green', 'yellow', 'pink']
-
+    plt.clf()
     datas = []
     for _ in range(len(outputs_classes)):
         datas.append(([[], []], [[], []]))
@@ -185,7 +185,8 @@ def plot_data(data, outputs_classes, predicted_outputs):
         plt.plot(xi, yi, linestyle='none', marker='o', markerfacecolor=colors[i], markeredgecolor='black', label=label_i)
 
     plt.legend()
-    plt.show()
+    plt.title(filename)
+    plt.savefig(filename + '.png')
 
 
 def initialize_network(neurons, n_inputs, outputs_classes, biases):
@@ -240,4 +241,4 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
         print("accuracy: %.3f" % accuracy)
 
         # Plot test data. Dots with black egdes are the ones that didn't get classified correctly.
-        plot_data(testing_set_inputs, outputs_classes, predicted_outputs)
+        plot_data(testing_set_inputs, outputs_classes, predicted_outputs, save_nn)
