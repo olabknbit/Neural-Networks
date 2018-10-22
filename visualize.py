@@ -26,15 +26,15 @@ def visualize(layers, output_classes, epoch):
 
     for row in layers:
         for k in row:
-            f.node(str(i))
             f.node('Σ' + str(i))
+            f.node(str(i))
             label = str('%.3f' % k['output'])
-            f.edge(str(i), 'Σ' + str(i), xlabel= str(label), fontsize='8', penwidth='0.01' )
-            next.append('Σ' + str(i))
+            f.edge('Σ' + str(i),  str(i), xlabel= str(label), fontsize='8', penwidth='0.01' )
+            next.append(str(i))
             j=0
             for z in prev:
                 label = str('%.3f' % k['weights'][j])
-                f.edge(str(z), str(i), xlabel= str(label), fontsize='8', penwidth='0.01' )
+                f.edge(str(z), 'Σ' + str(i), xlabel= str(label), fontsize='8', penwidth='0.01' )
                 j+=1
             i += 1
         prev = next
