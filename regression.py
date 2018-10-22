@@ -198,7 +198,7 @@ def print_data(data, predicted_outputs):
         min = float('inf')
 
         for j,row in enumerate(data):
-            if(min > abs(row[1]- pred)):
+            if(min > (abs(row[1]- pred)**2+abs(row[0]- data[i][0] )**2)**0.5):
                 min = abs(row[1]- pred)
         err += min
 
