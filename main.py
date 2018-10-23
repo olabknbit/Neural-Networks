@@ -9,6 +9,9 @@ def main():
     parser.add_argument('action', choices=['regression', 'classification'],
                         help='Choose mode either \'regression\' or \'classification\'.')
 
+    parser.add_argument('activation', choices=['sigmoid', 'relu'],
+                        help='Choose mode either \'sigmoid\' or \'relu\'.')
+
     parser.add_argument('--train_filename', type=str, help='Name of a file containing training data', required=False)
     parser.add_argument('--test_filename', type= str, help='Name of a file containing testing data')
     parser.add_argument('--create_nn', nargs='+', type=int,
@@ -46,6 +49,16 @@ def main():
         print('\'--create_nn\' cannot be provided when \'--train_filename\' is not provided.')
         exit(1)
 
+    if args.activation == 'sigmoid':
+        from util import sigmoid, sigmoid_derivative
+        activation_f, activation_f_derivative = sigmoid, sigmoid_derivative
+    elif args.activation == 'relu':
+        from util import sigmoid, sigmoid_derivative, reLu, reLu_derivative
+        activation_f, activation_f_derivative = reLu, reLu_derivative
+    else:
+        print('Sorry, second positional argument has to be either \'sigmoid\' or \'relu\'.')
+        exit(1)
+
     if args.action == 'regression':
         import regression
         regression.main(args.train_filename, args.test_filename, args.create_nn, args.save_nn, args.read_nn,
@@ -53,7 +66,8 @@ def main():
     elif args.action == 'classification':
         import classification
         classification.main(args.train_filename, args.test_filename, args.create_nn, args.save_nn, args.read_nn,
-                        args.number_of_epochs, args.visualize_every, args.l_rate, args.biases)
+                        args.number_of_epochs, args.visualize_every, args.l_rate, args.biases,
+                        activation_f, activation_f_derivative)
     else:
         print('Sorry, first positional argument has to be either \'regression\' or \'classification\'.')
         exit(1)

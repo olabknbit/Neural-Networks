@@ -84,7 +84,6 @@ class NeuralNetwork:
 
     def train(self, data_input, l_rate, n_iter, visualize_every):
         for epoch in range(n_iter):
-            iter_error = 0.0
             for row in data_input:
                 # The net should only predict the class based on the features,
                 # so the last cell which represents the class is not passed forward.
@@ -96,12 +95,11 @@ class NeuralNetwork:
                 expected = [0.0 for _ in range(len(self.output_classes))]
                 expected[self.output_classes[row[-1]]] = 1.0
 
-                iter_error += sum([(expected_i - output_i) ** 2 for expected_i, output_i in zip(expected, outputs)])
                 self.backward_propagate(expected)
                 # albo stochastic albo batchowe update TODO
                 self.update_weights(row, l_rate)
             if epoch % visualize_every == 0:
-                print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, iter_error))
+                print('>epoch=%d, lrate=%.3f' % (epoch, l_rate))
 
     def get_weights(self):
         return [str(layer.neurons) for layer in self.layers]
@@ -151,7 +149,7 @@ def get_n_inputs_outputs(data):
     return n_inputs, outputs_classes
 
 
-def plot_data(data, outputs_classes, predicted_outputs, filename):
+def plot_data(data, outputs_classes, predicted_outputs, accuracy, filename):
     import matplotlib.pyplot as plt
     colors = ['red', 'blue', 'green', 'yellow', 'pink']
     plt.clf()
@@ -185,11 +183,11 @@ def plot_data(data, outputs_classes, predicted_outputs, filename):
         plt.plot(xi, yi, linestyle='none', marker='o', markerfacecolor=colors[i], markeredgecolor='black', label=label_i)
 
     plt.legend()
-    plt.title(filename)
+    plt.title(filename + ' ' + str(accuracy))
     plt.savefig(filename + '.png')
 
 
-def initialize_network(neurons, n_inputs, outputs_classes, biases):
+def initialize_network(neurons, n_inputs, outputs_classes, biases, activation_f, activation_f_derivative):
     # Combine the layers to create a neural network
     layers = []
     n_outputs = len(outputs_classes)
@@ -201,12 +199,13 @@ def initialize_network(neurons, n_inputs, outputs_classes, biases):
         n_in = n_neurons
     layers.append(NeuronLayer(get_random_naurons(n_in + bias, n_outputs)))
 
-    from util import sigmoid, sigmoid_derivative
-    return NeuralNetwork(layers, sigmoid, sigmoid_derivative, outputs_classes)
+    return NeuralNetwork(layers, activation_f, activation_f_derivative, outputs_classes)
 
 
-def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_epochs, visualize_every, l_rate, biases):
+def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_epochs, visualize_every, l_rate, biases,
+         activation_f, activation_f_derivative):
     from util import write_network_to_file, read_network_layers_from_file
+
 
     neural_network = None
     outputs_classes = None
@@ -216,11 +215,10 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
         if create_nn is not None:
             # Calculate the number of inputs and outputs from the data.
             n_inputs, outputs_classes = get_n_inputs_outputs(training_set_inputs)
-            neural_network = initialize_network(create_nn, n_inputs, outputs_classes, biases)
+            neural_network = initialize_network(create_nn, n_inputs, outputs_classes, biases, activation_f, activation_f_derivative)
         else:
-            from util import sigmoid, sigmoid_derivative
             layers, outputs_classes = read_network_layers_from_file(read_nn)
-            neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], sigmoid, sigmoid_derivative, outputs_classes)
+            neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative, outputs_classes)
 
         # Train neural network.
         neural_network.train(training_set_inputs, l_rate, number_of_epochs, visualize_every)
@@ -232,13 +230,12 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
         testing_set_inputs = read_file(test_filename)
 
         if neural_network is None:
-            from util import sigmoid, sigmoid_derivative
             layers, outputs_classes = read_network_layers_from_file(read_nn)
-            neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], sigmoid, sigmoid_derivative, outputs_classes)
+            neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative, outputs_classes)
 
         # Test the neural network.
         accuracy, predicted_outputs = neural_network.test(testing_set_inputs)
         print("accuracy: %.3f" % accuracy)
 
         # Plot test data. Dots with black egdes are the ones that didn't get classified correctly.
-        plot_data(testing_set_inputs, outputs_classes, predicted_outputs, save_nn)
+        plot_data(testing_set_inputs, outputs_classes, predicted_outputs, accuracy, save_nn)
