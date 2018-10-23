@@ -14,7 +14,7 @@ def main():
 
     parser.add_argument('--train_filename', type=str, help='Name of a file containing training data', required=False)
     parser.add_argument('--test_filename', type= str, help='Name of a file containing testing data')
-    parser.add_argument('--create_nn', nargs='+', type=int,
+    parser.add_argument('--create_nn', nargs='*', type=int,
                         help='When creating a nn from scratch; number of neurons for each layer',
                         required=False)
     parser.add_argument('--save_nn',  type=str, help='Name of a file to save trained model to.')

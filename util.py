@@ -29,11 +29,8 @@ def reLu_derivative(output):
 # Sigmoid transfer function
 def sigmoid(activation):
     return 1.0 / (1.0 + exp(-activation))
-    # return activation * 0.3
-    # return 1.0*(exp(activation)-exp(-activation))/(0.0+exp(activation)+exp(-activation))
 
 
-# TODO nie tangens hiperboliczny do porownania (inna funkcja)
 # Derivative of transfer function
 def sigmoid_derivative(output):
     return output * (1.0 - output)
@@ -52,6 +49,6 @@ def read_network_layers_from_file(filename):
     with open(filename, 'r') as file:
         rows = file.readlines()
         layers = [eval(row) for row in rows[1:]]
-        output_classes = rows[0]
+        output_classes = eval(rows[0])
         return layers, output_classes
 

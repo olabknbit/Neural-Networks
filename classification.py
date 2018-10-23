@@ -1,6 +1,3 @@
-from numpy import random
-
-
 def get_random_naurons(n_inputs, n_neurons):
     from numpy import random
     # random numbers from range [0; 0.3) are proven to be best
@@ -84,22 +81,33 @@ class NeuralNetwork:
 
     def train(self, data_input, l_rate, n_iter, visualize_every):
         for epoch in range(n_iter):
+            SE = 0.0
+            correct = 0.0
             for row in data_input:
                 # The net should only predict the class based on the features,
                 # so the last cell which represents the class is not passed forward.
-                # TODO : stochastic bp maybe
                 outputs = self.forward_propagate(row[:-1])
+                max_index = outputs.index(max(outputs))
+                correct_index = self.output_classes[row[-1]]
+                outputs_up = [0 if i is not max_index else 1 for i in range(len(outputs))]
+                if max_index == correct_index:
+                    correct += 1
 
                 # The expected values are 0s for all neurons except for the ith,
                 # where i is the class that is the output.
                 expected = [0.0 for _ in range(len(self.output_classes))]
                 expected[self.output_classes[row[-1]]] = 1.0
 
+                SE += sum([(expected_i - output_i) ** 2 for expected_i, output_i in zip(expected, outputs)])
+
                 self.backward_propagate(expected)
                 # albo stochastic albo batchowe update TODO
                 self.update_weights(row, l_rate)
+            MSE = 1.0 * SE/(1.0*len(data_input))
+            accuracy = correct / len(data_input)
             if epoch % visualize_every == 0:
-                print('>epoch=%d, lrate=%.3f' % (epoch, l_rate))
+                print('>epoch=%d, lrate=%.3f, mse=%.3f, accuracy=%.3f' % (epoch, l_rate, MSE, accuracy))
+                # print(self.get_weights())
 
     def get_weights(self):
         return [str(layer.neurons) for layer in self.layers]
