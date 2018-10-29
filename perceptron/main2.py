@@ -1,4 +1,4 @@
-from util import read_network_layers_from_file, write_network_to_file
+from perceptron.util import read_network_layers_from_file
 
 
 def main2():
@@ -10,7 +10,7 @@ def main2():
     args = parser.parse_args()
     layers, output_classes = read_network_layers_from_file(args.file)
 
-    import visualize
+    from perceptron import visualize
     visualize.main(layers, output_classes, args.file)
     # import matplotlib.pyplot as plt
     # import networkx as nx

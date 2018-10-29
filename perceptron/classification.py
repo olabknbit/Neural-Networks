@@ -1,6 +1,3 @@
-import numpy as np
-
-
 def get_random_naurons(n_inputs, n_neurons):
     from numpy import random
     # random numbers from range [0; 0.3) are proven to be best
@@ -16,13 +13,12 @@ class NeuronLayer:
 
     # Calculate what are the outputs of the layer for the given inputs.
     def forward_propagate(self, inputs, activation_f):
-        from util import activate
+        from perceptron.util import activate
         outputs = []
         for neuron in self.neurons:
             activation = activate(neuron['weights'], inputs)
             neuron['output'] = activation_f(activation)
             outputs.append(neuron['output'])
-
         return outputs
 
     def backward_propagate(self, next_layer, activation_f_derivative):
@@ -40,45 +36,32 @@ class NeuronLayer:
             neuron['weights'][-1] += l_rate * neuron['delta']
         return self.neurons
 
-    def linear_propagate(self, inputs):
-        from util import activate, linear
-        outputs = []
-        for neuron in self.neurons:
-            activation = activate(neuron['weights'], inputs)
-            neuron['output'] = linear(activation)
-            outputs.append(neuron['output'])
 
-        return outputs
-
-
-class NeuralNetwork():
-    def __init__(self, layers, activation_f, activation_f_derivative):
+class NeuralNetwork:
+    def __init__(self, layers, activation_f, activation_f_derivative, output_classes):
         self.layers = layers
         self.activation_f = lambda x: activation_f(x)
         self.activation_f_derivative = lambda x: activation_f_derivative(x)
+        self.output_classes = output_classes
 
     # Pipe data row through the network and get final outputs.
     def forward_propagate(self, row):
         outputs = row
-        for layer in self.layers[:-1]:
+        for layer in self.layers:
             inputs = outputs
             outputs = layer.forward_propagate(inputs, self.activation_f)
-
-        inputs = outputs
-        outputs = self.layers[-1].linear_propagate(inputs)
 
         return outputs
 
     # Calculate 'delta' for every neuron. This will then be used to update the weights of the neurons.
-    def backward_propagate(self, expected_val):
-        from util import linear_derivative
+    def backward_propagate(self, expected_vals):
         # Update last layer's (output layer's) 'delta' field.
         # This field is needed to calculate 'delta' fields in previous (closer to input layer) layers,
         # so then we can update the weights.
         layer = self.layers[-1].neurons
-        neuron = layer[0]
-        error = (expected_val - neuron['output'])
-        neuron['delta'] = error * linear_derivative(neuron['output'])
+        for neuron, expected in zip(layer, expected_vals):
+            error = (expected - neuron['output'])
+            neuron['delta'] = error * self.activation_f_derivative(neuron['output'])
 
         # Update other layers' 'delta' field, so we can later update wights based on value of this field.
         next_layer = layer
@@ -98,39 +81,51 @@ class NeuralNetwork():
 
     def train(self, data_input, l_rate, n_iter, visualize_every):
         for epoch in range(n_iter):
-            iter_error = 0.0
+            SE = 0.0
+            correct = 0.0
             for row in data_input:
                 # The net should only predict the class based on the features,
                 # so the last cell which represents the class is not passed forward.
                 outputs = self.forward_propagate(row[:-1])
+                max_index = outputs.index(max(outputs))
+                correct_index = self.output_classes[row[-1]]
+                outputs_up = [0 if i is not max_index else 1 for i in range(len(outputs))]
+                if max_index == correct_index:
+                    correct += 1
 
-                expected = row[-1]
-                iter_error += np.sqrt(expected ** 2)
+                # The expected values are 0s for all neurons except for the ith,
+                # where i is the class that is the output.
+                expected = [0.0 for _ in range(len(self.output_classes))]
+                expected[self.output_classes[row[-1]]] = 1.0
+
+                SE += sum([(expected_i - output_i) ** 2 for expected_i, output_i in zip(expected, outputs)])
+
                 self.backward_propagate(expected)
+                # albo stochastic albo batchowe update TODO
                 self.update_weights(row, l_rate)
+            MSE = 1.0 * SE/(1.0*len(data_input))
+            accuracy = correct / len(data_input)
             if epoch % visualize_every == 0:
-                import visualize
-                from util import read_network_layers_from_file, write_network_to_file
-                write_network_to_file("temp", self)
-                layers, _ = read_network_layers_from_file("temp")
-                visualize.main(layers, [], str(epoch))
-                print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, iter_error))
+                print('>epoch=%d, lrate=%.3f, mse=%.3f, accuracy=%.3f' % (epoch, l_rate, MSE, accuracy))
+                # print(self.get_weights())
 
     def get_weights(self):
         return [str(layer.neurons) for layer in self.layers]
 
     def predict(self, row):
-        return self.forward_propagate(row[:-1])
+        outputs = self.forward_propagate(row[:-1])
+        return outputs.index(max(outputs))
 
     def test(self, test_data):
         predicted_outputs = []
-        error = 0.0
+        correct = 0
         for row in test_data:
-            predicted_output = self.predict(row)[0]
-            correct_output = row[-1]
+            predicted_output = self.predict(row)
+            correct_output = self.output_classes[row[-1]]
             predicted_outputs.append(predicted_output)
-            error += abs(predicted_output - correct_output)
-        return error / len(test_data), predicted_outputs
+            if correct_output == predicted_output:
+                correct += 1
+        return correct / len(test_data), predicted_outputs
 
 
 def read_file(filename):
@@ -143,7 +138,7 @@ def read_file(filename):
             if first:
                 first = False
             else:
-                row = [float(x) for x in row[:-1]] + [float(row[-1])]
+                row = [float(x) for x in row[:-1]] + [int(row[-1])]
                 rows.append(row)
         return rows
 
@@ -153,94 +148,85 @@ def read_file(filename):
 #  in NN.
 def get_n_inputs_outputs(data):
     n_inputs = len(data[0]) - 1
-
-    outputs_classes = {0: 0}
+    outputs = set()
+    for row in data:
+        outputs.add(row[-1])
+    outputs_classes = {}
+    for i, outpt in enumerate(outputs):
+        outputs_classes[outpt] = i
     return n_inputs, outputs_classes
 
 
-def plot_data(data, predicted_outputs, training_data=None):
+def plot_data(data, outputs_classes, predicted_outputs, accuracy, filename):
     import matplotlib.pyplot as plt
-    colors = ['red', 'blue', 'green']
+    colors = ['red', 'blue', 'green', 'yellow', 'pink']
+    plt.clf()
+    datas = []
+    for _ in range(len(outputs_classes)):
+        datas.append(([[], []], [[], []]))
 
-    for i, row in enumerate(data):
-        plt.scatter(row[0], row[1], c=colors[0])
-        plt.scatter(row[0], predicted_outputs[i], c=colors[1])
+    for row, predicted in zip(data, predicted_outputs):
+        i = row[2]
+        output_class = outputs_classes[i]
+        correct, incorrect = datas[output_class]
+        if predicted != output_class:
+            x, y = incorrect
+            x.append(row[0])
+            y.append(row[1])
+        else:
+            x, y = correct
+            x.append(row[0])
+            y.append(row[1])
 
-    if training_data is not None:
-        for row in training_data:
-            plt.scatter(row[0], row[1], c=colors[2])
+    for i, c in enumerate(datas):
+        correct, incorrect = c
+        xc, yc = correct
+        xi, yi = incorrect
+        len_c = len(xc)
+        len_i = len(xi)
+        len_all = len_c + len_i
+        label_c = 'correct + %d/%d + (%f)' % (len_c, len_all, (len_c / len_all))
+        label_i = 'incorrect + %d/%d + (%f)' % (len_i, len_all, (len_i / len_all))
+        plt.plot(xc, yc, linestyle='none', marker='o', markerfacecolor=colors[i], markeredgecolor='none', label=label_c)
+        plt.plot(xi, yi, linestyle='none', marker='o', markerfacecolor=colors[i], markeredgecolor='black', label=label_i)
 
-    plt.show()
-
-def print_data(data, predicted_outputs):
-    Error = 0.0
-    SE = 0.0
-    RAEDivider = 0.0
-    RRAEDivider = 0.0
-    AvgData = sum(predicted_outputs)/len(predicted_outputs)
-
-    for i, row in enumerate(data):
-        Error += abs(predicted_outputs[i] - row[1])
-        SE += (predicted_outputs[i] - row[1])**2
-        RAEDivider += abs(AvgData - row[1])
-        RRAEDivider += (AvgData - row[1])**2
-
-    AvgError = 1.0 * Error/(1.0*len(data))
-    MSE = 1.0 * SE/(1.0*len(data))
-    RMSE = MSE**0.5
-    RAE = Error / RAEDivider
-    RRAE = SE / RRAEDivider
-
-    print('Error = %.3f' %(Error))
-    print('AvgError = %.3f' %(AvgError))
-    print('MSE = %.3f' %(MSE))
-    print('RMSE = %.3f' %(RMSE))
-    print('RAE = %.3f' %(RAE))
-    print('RRAE = %.3f' %(RRAE))
-
-    err = 0.0
-    for i,pred in enumerate(predicted_outputs):
-        min = float('inf')
-
-        for j,row in enumerate(data):
-            if(min > ((row[1]- pred)**2 + (row[0]- data[i][0])**2)**0.5):
-                min = ((row[1]- pred)**2 + (row[0]- data[i][0])**2)**0.5
-        err += min
+    plt.legend()
+    plt.title(filename + ' ' + str(accuracy))
+    plt.savefig(filename + '.png')
 
 
-    print('Sum of distances = %.3f' %(err))
-    print('Avg distance = %.3f' %(err/len(data)))
-
-def initialize_network(neurons, n_inputs, outputs_classes, biases):
+def initialize_network(neurons, n_inputs, outputs_classes, biases, activation_f, activation_f_derivative):
     # Combine the layers to create a neural network
     layers = []
     n_outputs = len(outputs_classes)
     n_in = n_inputs
     bias = 1 if biases else 0
+    # Create a layer with n_neurons neurons, each with n_inputs.
     for n_neurons in neurons:
         layers.append(NeuronLayer(get_random_naurons(n_in + bias, n_neurons)))
         n_in = n_neurons
     layers.append(NeuronLayer(get_random_naurons(n_in + bias, n_outputs)))
 
-    from util import sigmoid, sigmoid_derivative
-    return NeuralNetwork(layers, sigmoid, sigmoid_derivative)
+    return NeuralNetwork(layers, activation_f, activation_f_derivative, outputs_classes)
 
 
-def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_epochs, visualize_every, l_rate, biases):
-    from util import read_network_layers_from_file, write_network_to_file
+def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_epochs, visualize_every, l_rate, biases,
+         activation_f, activation_f_derivative):
+    from perceptron.util import write_network_to_file, read_network_layers_from_file
+
+
     neural_network = None
-    training_set_inputs = None
+    outputs_classes = None
     if train_filename is not None:
         training_set_inputs = read_file(train_filename)
 
         if create_nn is not None:
             # Calculate the number of inputs and outputs from the data.
             n_inputs, outputs_classes = get_n_inputs_outputs(training_set_inputs)
-            neural_network = initialize_network(create_nn, n_inputs, outputs_classes, biases)
+            neural_network = initialize_network(create_nn, n_inputs, outputs_classes, biases, activation_f, activation_f_derivative)
         else:
-            from util import sigmoid, sigmoid_derivative
-            layers, _ = read_network_layers_from_file(read_nn)
-            neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], sigmoid, sigmoid_derivative)
+            layers, outputs_classes = read_network_layers_from_file(read_nn)
+            neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative, outputs_classes)
 
         # Train neural network.
         neural_network.train(training_set_inputs, l_rate, number_of_epochs, visualize_every)
@@ -252,14 +238,12 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
         testing_set_inputs = read_file(test_filename)
 
         if neural_network is None:
-            from util import sigmoid, sigmoid_derivative
-            layers, _ = read_network_layers_from_file(read_nn)
-            neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], sigmoid, sigmoid_derivative)
+            layers, outputs_classes = read_network_layers_from_file(read_nn)
+            neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative, outputs_classes)
 
         # Test the neural network.
         accuracy, predicted_outputs = neural_network.test(testing_set_inputs)
         print("accuracy: %.3f" % accuracy)
 
-
-        print_data(testing_set_inputs, predicted_outputs)
-        plot_data(testing_set_inputs, predicted_outputs, training_set_inputs)
+        # Plot test data. Dots with black egdes are the ones that didn't get classified correctly.
+        plot_data(testing_set_inputs, outputs_classes, predicted_outputs, accuracy, save_nn)

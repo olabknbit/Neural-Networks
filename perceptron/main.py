@@ -50,24 +50,24 @@ def main():
         exit(1)
 
     if args.activation == 'sigmoid':
-        from util import sigmoid, sigmoid_derivative
+        from perceptron.util import sigmoid, sigmoid_derivative
         activation_f, activation_f_derivative = sigmoid, sigmoid_derivative
     elif args.activation == 'relu':
-        from util import sigmoid, sigmoid_derivative, reLu, reLu_derivative
+        from perceptron.util import sigmoid, sigmoid_derivative, reLu, reLu_derivative
         activation_f, activation_f_derivative = reLu, reLu_derivative
     else:
         print('Sorry, second positional argument has to be either \'sigmoid\' or \'relu\'.')
         exit(1)
 
     if args.action == 'regression':
-        import regression
+        from perceptron import regression
         regression.main(args.train_filename, args.test_filename, args.create_nn, args.save_nn, args.read_nn,
                         args.number_of_epochs, args.visualize_every, args.l_rate, args.biases)
     elif args.action == 'classification':
-        import classification
+        from perceptron import classification
         classification.main(args.train_filename, args.test_filename, args.create_nn, args.save_nn, args.read_nn,
-                        args.number_of_epochs, args.visualize_every, args.l_rate, args.biases,
-                        activation_f, activation_f_derivative)
+                            args.number_of_epochs, args.visualize_every, args.l_rate, args.biases,
+                            activation_f, activation_f_derivative)
     else:
         print('Sorry, first positional argument has to be either \'regression\' or \'classification\'.')
         exit(1)
