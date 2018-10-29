@@ -4,7 +4,6 @@
 def print_image(table, length, width):
     import matplotlib.pyplot as plt
     import numpy as np
-    import math
     from matplotlib.colors import ListedColormap
 
     image = np.empty((length, width))
@@ -13,7 +12,6 @@ def print_image(table, length, width):
         for j in range(width):
             image[i][j] = table[iter]
             iter += 1
-
 
     cmap = ListedColormap(['k', 'w'])
     plt.matshow(image, cmap=cmap)
