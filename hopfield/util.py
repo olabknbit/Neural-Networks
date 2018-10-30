@@ -18,6 +18,15 @@ def print_image(table, length, width):
     plt.show()
 
 
+class ImagePrinter:
+    def __init__(self, width, length):
+        self.width = width
+        self.length = length
+
+    def print_image(self, image):
+        print_image(image, self.width, self.length)
+
+
 def read_file(filename):
     with open(filename, 'r') as file:
         rows = file.readlines()
