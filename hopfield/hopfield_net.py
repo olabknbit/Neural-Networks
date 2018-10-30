@@ -5,7 +5,8 @@ from util import ImagePrinter
 def _get_weigths(x_input):
     x_input = np.array(x_input)
     x_input_t = x_input.transpose()
-    return np.outer(x_input, x_input_t)
+    I = np.identity(len(x_input))
+    return np.outer(x_input, x_input_t) - I
 
 
 class Net:
@@ -17,9 +18,6 @@ class Net:
         self.bias = bias
         for x_input in x_inputs[1:]:
             self.weights += _get_weigths(x_input)
-
-        I = np.identity(len(x_inputs[0]))
-        self.weights = self.weights - I
         self.weights = self.weights / len(x_inputs)
 
     def recover_synchronous(self, x_input, visualize, plots, steps=10):
@@ -27,7 +25,7 @@ class Net:
 
         last_energy = self.energy(x_input)
         for step, _ in enumerate(range(steps)):
-            x_input = np.sign(np.dot(x_input, self.weights) - self.bias)
+            x_input = np.sign(np.dot(x_input, self.weights) - self.bias) # what if np.dot product is 0? what does sign do?
             e = self.energy(x_input)
 
             if e.__eq__(last_energy):
@@ -55,7 +53,7 @@ def flip_bits(image, bits, width, length, seed):
     return image
 
 
-def run(images, width, length, seed, flip, visualize, bias,steps):
+def run(images, width, length, seed, flip, visualize, bias, steps):
     ip = ImagePrinter(width, length)
     model = Net(ip)
     model._initialize_params(images, bias)
