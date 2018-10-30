@@ -43,7 +43,7 @@ def flip_bits(image, bits, width, length, seed):
 
     image = np.array(image)
     for _ in range(bits):
-        i = random.randint(0, width * length)
+        i = random.randint(0, width * length - 1)
         image[i] = -1 * image[i]
     return image
 
