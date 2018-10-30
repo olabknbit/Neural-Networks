@@ -22,7 +22,7 @@ class Net:
         self.weights = self.weights - I
         self.weights = self.weights / len(x_inputs)
 
-    def recover_synchronous(self, x_input, visualize, steps=10):
+    def recover_synchronous(self, x_input, visualize, plots, steps=10):
         x_input = np.array(x_input)
 
         last_energy = self.energy(x_input)
@@ -35,7 +35,7 @@ class Net:
             if visualize:
                 print(x_input)
                 print(e)
-                self.image_printer.print_image(x_input, title=('step ' + str(step)))
+                plots.append((x_input, ('step ' + str(step))))
             last_energy = e
 
         return x_input
@@ -55,21 +55,22 @@ def flip_bits(image, bits, width, length, seed):
     return image
 
 
-def run(images, width, length, seed, flip, visualize, bias):
+def run(images, width, length, seed, flip, visualize, bias,steps):
     ip = ImagePrinter(width, length)
     model = Net(ip)
     model._initialize_params(images, bias)
 
-    for image in images[-3:]:
+    for image in images:
         fuzzy_image = flip_bits(image, flip, width, length, seed)
+        plots = []
         if visualize:
-            ip.print_image(image, title='original')
-            ip.print_image(fuzzy_image, title='fuzzy')
+            plots.append((image, 'original'))
+            plots.append((fuzzy_image, 'fuzzy'))
         e = model.energy(fuzzy_image)
         print(e)
-        t = model.recover_synchronous(fuzzy_image, visualize)
+        t = model.recover_synchronous(fuzzy_image, visualize, plots, steps=steps)
         if visualize:
-            ip.print_image(tuple(t), 'output')
-            ip.print_image(tuple(image), title='original')
+            plots.append((tuple(t), 'output'))
         e = model.energy(t)
+        ip.print_images(plots)
         print(e)
