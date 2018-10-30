@@ -1,7 +1,7 @@
 # Printing table with {-1 white,1 black} value
 # table is list, image is 2-dim table
 # length and width are from args
-def print_image(table, length, width):
+def print_image(table, length, width, title=''):
     import matplotlib.pyplot as plt
     import numpy as np
     from matplotlib.colors import ListedColormap
@@ -15,6 +15,7 @@ def print_image(table, length, width):
 
     cmap = ListedColormap(['k', 'w'])
     plt.matshow(image, cmap=cmap)
+    plt.title(title)
     plt.show()
 
 
@@ -23,8 +24,8 @@ class ImagePrinter:
         self.width = width
         self.length = length
 
-    def print_image(self, image):
-        print_image(image, self.width, self.length)
+    def print_image(self, image, title):
+        print_image(image, self.width, self.length, title)
 
 
 def read_file(filename):
