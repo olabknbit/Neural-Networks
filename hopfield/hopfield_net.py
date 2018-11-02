@@ -1,5 +1,6 @@
 import numpy as np
-from util import ImagePrinter
+from util import ImagePrinter, Printer
+import copy
 
 
 def _get_weigths(x_input):
@@ -48,15 +49,16 @@ class Net:
             temp_x_input = np.sign(np.dot(x_input, self.weights) - self.bias) # what if np.dot product is 0? what does sign do?
             x_input[list_indexes[step % len(x_input)]] = temp_x_input[list_indexes[step % len(x_input)]]
 
-            print(list_indexes[step % len(x_input)])
-            print(x_input)
             e = self.energy(x_input)
-            # if e.__eq__(last_energy):
-            #     break
+
             if visualize:
-                # print(x_input)
-                # print(e)
-                plots.append((x_input, ('step ' + str(step))))
+                # plots.append((x_input, ('step ' + str(step))))
+                # self.image_printer.print_image(x_input, step)
+                prin = Printer(self.image_printer.width, self.image_printer.height, copy.deepcopy(x_input))
+                prin.print_image( '', False, True)
+
+                x_input = prin.table2
+
             last_energy = e
 
         return x_input
@@ -65,24 +67,24 @@ class Net:
         return - x_input.dot(self.weights).dot(x_input) + np.sum(x_input * self.bias)
 
 
-def flip_bits(image, bits, width, length, seed):
+def flip_bits(image, bits, width, height, seed):
     import random
     random.seed(seed)
 
     image = np.array(image)
     for _ in range(bits):
-        i = random.randint(0, width * length - 1)
+        i = random.randint(0, width * height - 1)
         image[i] = -1 * image[i]
     return image
 
 
-def run(images, width, length, seed, flip, visualize, bias, steps, sync):
-    ip = ImagePrinter(width, length)
+def run(images, width, height, seed, flip, visualize, bias, steps, sync):
+    ip = ImagePrinter(width, height)
     model = Net(ip)
     model._initialize_params(images, bias)
 
     for image in images:
-        fuzzy_image = flip_bits(image, flip, width, length, seed)
+        fuzzy_image = flip_bits(image, flip, width, height, seed)
         plots = []
         if visualize:
             plots.append((image, 'original'))
@@ -97,6 +99,6 @@ def run(images, width, length, seed, flip, visualize, bias, steps, sync):
         if visualize:
             plots.append((tuple(t), 'output'))
         e = model.energy(t)
-        ip.print_images(plots)
+        # ip.print_images(plots)
         # print(e)
         break

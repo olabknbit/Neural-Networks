@@ -5,7 +5,7 @@ def main():
     parser.add_argument('--action', help='Choose mode either \'sync\' or \'async\'.', required=False, default='sync')
     parser.add_argument('--train_filename', type=str, help='Name of a file containing training data', required=True)
     parser.add_argument('-w','--width', type=int, help='Image width', required=True)
-    parser.add_argument('-l','--length',  type=int, help='Image length', required=True)
+    parser.add_argument('-he','--height',  type=int, help='Image height', required=True)
     parser.add_argument('--seed', type=int, help='Random seed int', required=False, default=1)
     parser.add_argument('--flip', type=int, help='How many bits to flip while testing', required=False, default=5)
     parser.add_argument('--visualize', type=bool, help='Generate image after each run', required=False, default=True)
@@ -19,7 +19,7 @@ def main():
     images = read_file(args.train_filename)
 
     import hopfield_net
-    hopfield_net.run(images, args.width, args.length, args.seed, args.flip, args.visualize, args.bias, args.steps, args.action == 'sync')
+    hopfield_net.run(images, args.width, args.height, args.seed, args.flip, args.visualize, args.bias, args.steps, args.action == 'sync')
 
 
 if __name__ == "__main__":
