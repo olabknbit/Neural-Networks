@@ -31,8 +31,31 @@ class Net:
             if e.__eq__(last_energy):
                 break
             if visualize:
-                print(x_input)
-                print(e)
+                # print(x_input)
+                # print(e)
+                plots.append((x_input, ('step ' + str(step))))
+            last_energy = e
+
+        return x_input
+
+    def recover_asynchronous(self, x_input, visualize, plots, steps=20):
+        import random
+        x_input = np.array(x_input)
+
+        last_energy = self.energy(x_input)
+        list_indexes = random.sample(range(0, len(x_input)), len(x_input))
+        for step, _ in enumerate(range(steps)):
+            temp_x_input = np.sign(np.dot(x_input, self.weights) - self.bias) # what if np.dot product is 0? what does sign do?
+            x_input[list_indexes[step % len(x_input)]] = temp_x_input[list_indexes[step % len(x_input)]]
+
+            print(list_indexes[step % len(x_input)])
+            print(x_input)
+            e = self.energy(x_input)
+            # if e.__eq__(last_energy):
+            #     break
+            if visualize:
+                # print(x_input)
+                # print(e)
                 plots.append((x_input, ('step ' + str(step))))
             last_energy = e
 
@@ -53,7 +76,7 @@ def flip_bits(image, bits, width, length, seed):
     return image
 
 
-def run(images, width, length, seed, flip, visualize, bias, steps):
+def run(images, width, length, seed, flip, visualize, bias, steps, sync):
     ip = ImagePrinter(width, length)
     model = Net(ip)
     model._initialize_params(images, bias)
@@ -65,10 +88,15 @@ def run(images, width, length, seed, flip, visualize, bias, steps):
             plots.append((image, 'original'))
             plots.append((fuzzy_image, 'fuzzy'))
         e = model.energy(fuzzy_image)
-        print(e)
-        t = model.recover_synchronous(fuzzy_image, visualize, plots, steps=steps)
+        # print(e)
+        if sync:
+            t = model.recover_synchronous(fuzzy_image, visualize, plots, steps=steps)
+        else:
+            t = model.recover_asynchronous(fuzzy_image, visualize, plots, steps=steps)
+
         if visualize:
             plots.append((tuple(t), 'output'))
         e = model.energy(t)
         ip.print_images(plots)
-        print(e)
+        # print(e)
+        break
