@@ -1,5 +1,5 @@
 import numpy as np
-from util import ImagePrinter, Printer
+from util import ImagePrinter, ResponsiveImagePrinter
 import copy
 
 
@@ -21,8 +21,9 @@ class Net:
             self.weights += _get_weigths(x_input)
         self.weights = self.weights / len(x_inputs)
 
-    def recover_synchronous(self, x_input, visualize, plots, steps=10):
+    def recover_synchronous(self, x_input, visualize, plots, width, height, steps=10):
         x_input = np.array(x_input)
+        responsive_printer = ResponsiveImagePrinter(width, height)
 
         last_energy = self.energy(x_input)
         for step, _ in enumerate(range(steps)):
@@ -31,17 +32,21 @@ class Net:
 
             if e.__eq__(last_energy):
                 break
-            if visualize:
-                # print(x_input)
-                # print(e)
+            if ((visualize > 0) and (step % visualize == 0)):
                 plots.append((x_input, ('step ' + str(step))))
+
+            elif visualize == -1:
+                responsive_printer.print_image(x_input, ('step ' + str(step)))
+                x_input = responsive_printer.table
+
             last_energy = e
 
         return x_input
 
-    def recover_asynchronous(self, x_input, visualize, plots, steps=20):
+    def recover_asynchronous(self, x_input, visualize, plots, width, height, steps=20):
         import random
         x_input = np.array(x_input)
+        responsive_printer = ResponsiveImagePrinter(width, height)
 
         last_energy = self.energy(x_input)
         list_indexes = random.sample(range(0, len(x_input)), len(x_input))
@@ -49,17 +54,13 @@ class Net:
             temp_x_input = np.sign(np.dot(x_input, self.weights) - self.bias) # what if np.dot product is 0? what does sign do?
             x_input[list_indexes[step % len(x_input)]] = temp_x_input[list_indexes[step % len(x_input)]]
 
-            e = self.energy(x_input)
+            if visualize == -1:
+                responsive_printer.print_image(x_input, ('step ' + str(step)))
+                x_input = responsive_printer.table
 
-            if visualize:
-                # plots.append((x_input, ('step ' + str(step))))
-                # self.image_printer.print_image(x_input, step)
-                prin = Printer(self.image_printer.width, self.image_printer.height, copy.deepcopy(x_input))
-                prin.print_image( '', False, True)
+            elif ((visualize > 0) and (step % visualize == 0)):
+                plots.append((x_input, ('step ' + str(step))))
 
-                x_input = prin.table2
-
-            last_energy = e
 
         return x_input
 
@@ -86,19 +87,19 @@ def run(images, width, height, seed, flip, visualize, bias, steps, sync):
     for image in images:
         fuzzy_image = flip_bits(image, flip, width, height, seed)
         plots = []
-        if visualize:
+        if visualize > 0:
             plots.append((image, 'original'))
             plots.append((fuzzy_image, 'fuzzy'))
         e = model.energy(fuzzy_image)
         # print(e)
         if sync:
-            t = model.recover_synchronous(fuzzy_image, visualize, plots, steps=steps)
+            t = model.recover_synchronous(fuzzy_image, visualize, plots, width, height, steps=steps)
         else:
-            t = model.recover_asynchronous(fuzzy_image, visualize, plots, steps=steps)
+            t = model.recover_asynchronous(fuzzy_image, visualize, plots, width, height, steps=steps)
 
-        if visualize:
+        if (visualize > 0):
             plots.append((tuple(t), 'output'))
+            ip.print_images(plots)
         e = model.energy(t)
-        # ip.print_images(plots)
         # print(e)
-        break
+        # break
