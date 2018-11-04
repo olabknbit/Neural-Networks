@@ -41,6 +41,9 @@ class Net:
 
             last_energy = e
 
+        if (visualize == -1):
+            responsive_printer.print_image(x_input, 'output')
+
         return x_input
 
     def recover_asynchronous(self, x_input, visualize, plots, width, height, steps=20):
@@ -54,6 +57,7 @@ class Net:
             temp_x_input = np.sign(np.dot(x_input, self.weights) - self.bias) # what if np.dot product is 0? what does sign do?
             x_input[list_indexes[step % len(x_input)]] = temp_x_input[list_indexes[step % len(x_input)]]
 
+
             if visualize == -1:
                 responsive_printer.print_image(x_input, ('step ' + str(step)))
                 x_input = responsive_printer.table
@@ -61,7 +65,8 @@ class Net:
             elif ((visualize > 0) and (step % visualize == 0)):
                 plots.append((x_input, ('step ' + str(step))))
 
-
+        if (visualize == -1):
+            responsive_printer.print_image(x_input, 'output')
         return x_input
 
     def energy(self, x_input):
@@ -75,6 +80,7 @@ def flip_bits(image, bits, width, height, seed):
     image = np.array(image)
     for _ in range(bits):
         i = random.randint(0, width * height - 1)
+
         image[i] = -1 * image[i]
     return image
 
@@ -89,6 +95,7 @@ def run(images, width, height, seed, flip, visualize, bias, steps, sync):
         plots = []
         if visualize > 0:
             plots.append((image, 'original'))
+
             plots.append((fuzzy_image, 'fuzzy'))
         e = model.energy(fuzzy_image)
         # print(e)
@@ -100,6 +107,7 @@ def run(images, width, height, seed, flip, visualize, bias, steps, sync):
         if (visualize > 0):
             plots.append((tuple(t), 'output'))
             ip.print_images(plots)
+
         e = model.energy(t)
         # print(e)
         # break
