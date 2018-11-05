@@ -12,7 +12,6 @@ def main():
     parser.add_argument('--bias', type=int, help='Bias', required=False, default=1)
     parser.add_argument('--steps', type=int, help='Steps', required=False, default=10)
 
-
     args = parser.parse_args()
 
     from util import read_file

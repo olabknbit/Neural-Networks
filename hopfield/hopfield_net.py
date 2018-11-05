@@ -110,4 +110,6 @@ def run(images, width, height, seed, flip, visualize, bias, steps, sync):
 
         e = model.energy(t)
 
-    print('accuracy %f' % (correct / len(images)))
+    accuracy = correct / len(images)
+    # print('accuracy %f' % accuracy)
+    return accuracy
