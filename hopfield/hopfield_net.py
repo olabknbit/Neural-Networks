@@ -32,7 +32,7 @@ class Net:
 
             if e.__eq__(last_energy):
                 break
-            if ((visualize > 0) and (step % visualize == 0)):
+            if visualize > 0 and step % visualize == 0:
                 plots.append((x_input, ('step ' + str(step))))
 
             elif visualize == -1:
@@ -40,8 +40,7 @@ class Net:
                 x_input = responsive_printer.table
 
             last_energy = e
-
-        if (visualize == -1):
+        if visualize == -1:
             responsive_printer.print_image(x_input, 'output')
 
         return x_input
@@ -57,15 +56,14 @@ class Net:
             temp_x_input = np.sign(np.dot(x_input, self.weights) - self.bias) # what if np.dot product is 0? what does sign do?
             x_input[list_indexes[step % len(x_input)]] = temp_x_input[list_indexes[step % len(x_input)]]
 
-
             if visualize == -1:
                 responsive_printer.print_image(x_input, ('step ' + str(step)))
                 x_input = responsive_printer.table
 
-            elif ((visualize > 0) and (step % visualize == 0)):
+            elif visualize > 0 and step % visualize == 0:
                 plots.append((x_input, ('step ' + str(step))))
 
-        if (visualize == -1):
+        if visualize == -1:
             responsive_printer.print_image(x_input, 'output')
         return x_input
 
@@ -89,7 +87,7 @@ def run(images, width, height, seed, flip, visualize, bias, steps, sync):
     ip = ImagePrinter(width, height)
     model = Net(ip)
     model._initialize_params(images, bias)
-
+    correct = 0
     for image in images:
         fuzzy_image = flip_bits(image, flip, width, height, seed)
         plots = []
@@ -98,16 +96,18 @@ def run(images, width, height, seed, flip, visualize, bias, steps, sync):
 
             plots.append((fuzzy_image, 'fuzzy'))
         e = model.energy(fuzzy_image)
-        # print(e)
         if sync:
             t = model.recover_synchronous(fuzzy_image, visualize, plots, width, height, steps=steps)
         else:
             t = model.recover_asynchronous(fuzzy_image, visualize, plots, width, height, steps=steps)
 
-        if (visualize > 0):
+        if np.array_equal(t, image):
+            correct += 1
+
+        if visualize > 0:
             plots.append((tuple(t), 'output'))
             ip.print_images(plots)
 
         e = model.energy(t)
-        # print(e)
-        # break
+
+    print('accuracy %f' % (correct / len(images)))
