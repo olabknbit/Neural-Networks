@@ -16,7 +16,10 @@ class Net:
     def _initialize_params(self, x_inputs, bias):
         self.weights = _get_weigths(x_inputs[0])
         self.bias = bias
-        for x_input in x_inputs[1:]:
+        self.train_more(x_inputs[1:], bias)
+
+    def train_more(self, x_inputs, bias=0):
+        for x_input in x_inputs:
             np.add(self.weights, _get_weigths(x_input), out=self.weights)
         if bias is not 0:
             self.weights = self.weights / len(x_inputs)
@@ -72,7 +75,7 @@ class Net:
                 x_input = responsive_printer.table
 
             elif visualize > 0 and step % visualize == 0:
-                plots.append((x_input, ('step ' + str(step))))
+                plots.append((np.copy(x_input), ('step ' + str(step))))
 
         if visualize == -1:
             responsive_printer.print_image(x_input, 'output')
@@ -80,6 +83,29 @@ class Net:
 
     def energy(self, x_input):
         return - x_input.dot(self.weights).dot(x_input) + np.sum(x_input * self.bias)
+
+    def test(self, images, width, height, seed, flip, visualize, steps, sync):
+        correct = 0.
+        for image in images:
+            fuzzy_image = flip_bits(image, flip, width, height, seed)
+            plots = []
+            if visualize > 0:
+                plots.append((image, 'original'))
+                plots.append((fuzzy_image, 'fuzzy'))
+            if sync:
+                t = self.recover_synchronous(fuzzy_image, visualize, plots, width, height, steps=steps)
+            else:
+                t = self.recover_asynchronous(fuzzy_image, visualize, plots, width, height, steps=steps)
+
+            if np.array_equal(t, image) or np.array_equal(t * 0.1, image):
+                correct += 1
+
+            if visualize > 0:
+                plots.append((tuple(t), 'output'))
+                self.ip.print_images(plots)
+
+        accuracy = correct / len(images)
+        return accuracy
 
 
 def flip_bits(image, bits, width, height, seed):
@@ -94,28 +120,13 @@ def flip_bits(image, bits, width, height, seed):
     return image
 
 
-def run(images, width, height, seed, flip, visualize, bias, steps, sync):
+def train(images, width, height, bias=0):
     ip = ImagePrinter(width, height)
     model = Net(ip)
     model._initialize_params(images, bias)
-    correct = 0.
-    for image in images:
-        fuzzy_image = flip_bits(image, flip, width, height, seed)
-        plots = []
-        if visualize > 0:
-            plots.append((image, 'original'))
-            plots.append((fuzzy_image, 'fuzzy'))
-        if sync:
-            t = model.recover_synchronous(fuzzy_image, visualize, plots, width, height, steps=steps)
-        else:
-            t = model.recover_asynchronous(fuzzy_image, visualize, plots, width, height, steps=steps)
+    return model
 
-        if np.array_equal(t, image):
-            correct += 1
 
-        if visualize > 0:
-            plots.append((tuple(t), 'output'))
-            ip.print_images(plots)
-
-    accuracy = correct / len(images)
-    return accuracy
+def run(images, width, height, seed, flip, visualize, steps, sync, bias=0):
+    model = train(images, width, height, bias)
+    return model.test(images, width, height, seed, flip, visualize, steps, sync)

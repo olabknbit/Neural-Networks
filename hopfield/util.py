@@ -22,7 +22,7 @@ def generate_plot(table, width, height, ax, title=''):
 # Printing table with {-1 white,1 black} value
 # table is list, image is 2-dim table
 # height and width are from args
-def print_image(table, width, height, title='', multiple=False, show=True):
+def print_image(table, width, height, title='', multiple=False, show=True, save=None):
     if multiple:
         fig = plt.figure(figsize=(8, 8))
         columns = 5
@@ -34,10 +34,13 @@ def print_image(table, width, height, title='', multiple=False, show=True):
                 title = ''
             ax = fig.add_subplot(rows, columns, i + 1)
             generate_plot(img, width, height, ax, title=title)
+
     else:
         generate_plot(table, width, height, plt, title=title)
     if show:
         plt.show()
+    if save != '':
+        plt.savefig(save)
 
 
 class ImagePrinter:
@@ -45,19 +48,18 @@ class ImagePrinter:
         self.width = width
         self.height = height
 
-    def print_image(self, image, title):
-        print_image(image, self.width, self.height, title)
+    def print_image(self, image, title, show=True, save=None):
+        print_image(image, self.width, self.height, title, show=show, save=save)
 
-    def print_images(self, images):
-        print_image(images, self.width, self.height, multiple=True)
+    def print_images(self, images, show=True, save=None):
+        print_image(images, self.width, self.height, multiple=True, show=show, save=save)
 
 
-def read_file(filename, maxx=-1):
+def read_file(filename):
     with open(filename, 'r') as file:
         rows = file.readlines()
         images = []
         for row in rows:
-            # and (maxx is not -1 and len(images) <= maxx)
             if len(row) > 1:
                 images.append(eval(row))
         return images
