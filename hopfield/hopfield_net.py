@@ -1,13 +1,12 @@
 import numpy as np
 from util import ImagePrinter, ResponsiveImagePrinter
-import copy
 
 
 def _get_weigths(x_input):
     x_input = np.array(x_input)
-    x_input_t = x_input.transpose()
     I = np.identity(len(x_input))
-    return np.outer(x_input, x_input_t) - I
+    a = np.outer(x_input, x_input) - I
+    return a
 
 
 class Net:
@@ -18,16 +17,19 @@ class Net:
         self.weights = _get_weigths(x_inputs[0])
         self.bias = bias
         for x_input in x_inputs[1:]:
-            self.weights += _get_weigths(x_input)
-        self.weights = self.weights / len(x_inputs)
+            np.add(self.weights, _get_weigths(x_input), out=self.weights)
+        if bias is not 0:
+            self.weights = self.weights / len(x_inputs)
 
     def recover_synchronous(self, x_input, visualize, plots, width, height, steps=10):
         x_input = np.array(x_input)
-        responsive_printer = ResponsiveImagePrinter(width, height)
+        responsive_printer = None
+        if visualize == -1:
+            responsive_printer = ResponsiveImagePrinter(width, height)
 
         last_energy = self.energy(x_input)
-        for step, _ in enumerate(range(steps)):
-            x_input = np.sign(np.dot(x_input, self.weights) - self.bias) # what if np.dot product is 0? what does sign do?
+        for step in range(steps):
+            x_input = np.sign(np.dot(x_input, self.weights) - self.bias)
             e = self.energy(x_input)
 
             if e.__eq__(last_energy):
@@ -53,7 +55,7 @@ class Net:
         last_energy = self.energy(x_input)
         list_indexes = random.sample(range(0, len(x_input)), len(x_input))
         for step, _ in enumerate(range(steps)):
-            temp_x_input = np.sign(np.dot(x_input, self.weights) - self.bias) # what if np.dot product is 0? what does sign do?
+            temp_x_input = np.sign(np.dot(x_input, self.weights) - self.bias)
             x_input[list_indexes[step % len(x_input)]] = temp_x_input[list_indexes[step % len(x_input)]]
 
             if visualize == -1:
@@ -87,15 +89,13 @@ def run(images, width, height, seed, flip, visualize, bias, steps, sync):
     ip = ImagePrinter(width, height)
     model = Net(ip)
     model._initialize_params(images, bias)
-    correct = 0
+    correct = 0.
     for image in images:
         fuzzy_image = flip_bits(image, flip, width, height, seed)
         plots = []
         if visualize > 0:
             plots.append((image, 'original'))
-
             plots.append((fuzzy_image, 'fuzzy'))
-        e = model.energy(fuzzy_image)
         if sync:
             t = model.recover_synchronous(fuzzy_image, visualize, plots, width, height, steps=steps)
         else:
@@ -108,8 +108,5 @@ def run(images, width, height, seed, flip, visualize, bias, steps, sync):
             plots.append((tuple(t), 'output'))
             ip.print_images(plots)
 
-        e = model.energy(t)
-
     accuracy = correct / len(images)
-    # print('accuracy %f' % accuracy)
     return accuracy
