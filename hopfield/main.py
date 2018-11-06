@@ -14,8 +14,8 @@ def main():
 
     args = parser.parse_args()
 
-    from util import read_file, ImagePrinter
-    images = read_file(args.train_filename, maxx=5)
+    from util import read_file
+    images = read_file(args.train_filename)
 
     import hopfield_net
     accuracy = hopfield_net.run(images, args.width, args.height, args.seed, args.flip, args.visualize, args.bias, args.steps, args.action == 'sync')
