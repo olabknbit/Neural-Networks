@@ -52,11 +52,20 @@ class Net:
         x_input = np.array(x_input)
         responsive_printer = ResponsiveImagePrinter(width, height)
 
+        i = 0
         last_energy = self.energy(x_input)
         list_indexes = random.sample(range(0, len(x_input)), len(x_input))
         for step, _ in enumerate(range(steps)):
             temp_x_input = np.sign(np.dot(x_input, self.weights) - self.bias)
             x_input[list_indexes[step % len(x_input)]] = temp_x_input[list_indexes[step % len(x_input)]]
+
+            if last_energy != self.energy(x_input):
+                last_energy = self.energy(x_input)
+                i = 0
+            else:
+                i += 1
+            if i>=len(x_input):
+                break
 
             if visualize == -1:
                 responsive_printer.print_image(x_input, ('step ' + str(step)))
