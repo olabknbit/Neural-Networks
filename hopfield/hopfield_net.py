@@ -26,6 +26,8 @@ class Net:
         responsive_printer = None
         if visualize == -1:
             responsive_printer = ResponsiveImagePrinter(width, height)
+            responsive_printer.print_image(x_input, 'input')
+            x_input = responsive_printer.table
 
         last_energy = self.energy(x_input)
         for step in range(steps):
@@ -35,7 +37,7 @@ class Net:
             if e.__eq__(last_energy):
                 break
             if visualize > 0 and step % visualize == 0:
-                plots.append((x_input, ('step ' + str(step))))
+                plots.append((np.copy(x_input), ('step ' + str(step))))
 
             elif visualize == -1:
                 responsive_printer.print_image(x_input, ('step ' + str(step)))
@@ -72,7 +74,7 @@ class Net:
                 x_input = responsive_printer.table
 
             elif visualize > 0 and step % visualize == 0:
-                plots.append((x_input, ('step ' + str(step))))
+                plots.append((np.copy(x_input), ('step ' + str(step))))
 
         if visualize == -1:
             responsive_printer.print_image(x_input, 'output')
