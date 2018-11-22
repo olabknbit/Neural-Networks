@@ -2,4 +2,6 @@
 .DS_Store
 __pycache__/
 projekt1-oddanie/
+*.pyc
+nn/
 
