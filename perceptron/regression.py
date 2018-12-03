@@ -148,29 +148,31 @@ def read_file(filename):
         return rows
 
 
-# Return number of features - n_inputs for NN and outoput_classes which is a map like {3: 0, 2: 1:, 5: 2},
-# where each key represents a class (as they occur in original data, eg, here class 3, 2 and 5) and indices they have
-#  in NN.
+# Return number of features - n_inputs for NN.
 def get_n_inputs_outputs(data):
     n_inputs = len(data[0]) - 1
-
-    outputs_classes = {0: 0}
-    return n_inputs, outputs_classes
+    return n_inputs
 
 
-def plot_data(data, predicted_outputs, training_data=None):
+def plot_data(test_data, predicted_outputs, visualize, savefig_filename, training_data=None):
     import matplotlib.pyplot as plt
-    colors = ['red', 'blue', 'green']
+    marker = '.'
 
-    for i, row in enumerate(data):
-        plt.scatter(row[0], row[1], c=colors[0])
-        plt.scatter(row[0], predicted_outputs[i], c=colors[1])
+    test_data_x = [t[0] for t in test_data]
+    test_data_y = [t[1] for t in test_data]
+    plt.plot(test_data_x, test_data_y, marker, c='red', label='test_data')
+    plt.plot(test_data_x, predicted_outputs, marker, c='blue', label='predicted')
 
     if training_data is not None:
-        for row in training_data:
-            plt.scatter(row[0], row[1], c=colors[2])
+        training_data_x = [t[0] for t in training_data]
+        training_data_y = [t[1] for t in training_data]
+        plt.plot(training_data_x, training_data_y, marker, c='green', label='training_data')
 
-    plt.show()
+    plt.legend()
+    if visualize:
+        plt.show()
+    if savefig_filename:
+        plt.savefig(savefig_filename)
 
 
 def print_data(data, predicted_outputs):
@@ -212,23 +214,22 @@ def print_data(data, predicted_outputs):
     print('Avg distance = %.3f' % (err / len(data)))
 
 
-def initialize_network(neurons, n_inputs, outputs_classes, biases):
+def initialize_network(neurons, n_inputs, biases, activation_f, activation_f_derivative):
     # Combine the layers to create a neural network
     layers = []
-    n_outputs = len(outputs_classes)
     n_in = n_inputs
     bias = 1 if biases else 0
     for n_neurons in neurons:
         layers.append(NeuronLayer(get_random_neurons(n_in + bias, n_neurons)))
         n_in = n_neurons
-    layers.append(NeuronLayer(get_random_neurons(n_in + bias, n_outputs)))
+    layers.append(NeuronLayer(get_random_neurons(n_in + bias, 1)))
 
-    from util import sigmoid, sigmoid_derivative
-    return NeuralNetwork(layers, sigmoid, sigmoid_derivative)
+    return NeuralNetwork(layers, activation_f, activation_f_derivative)
 
 
-def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_epochs, visualize_every, l_rate, biases):
-    from util import read_network_layers_from_file, write_network_to_file, sigmoid, sigmoid_derivative
+def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_epochs, visualize_every, l_rate, biases,
+         savefig_filename, activation_f, activation_f_derivative):
+    from util import read_network_layers_from_file, write_network_to_file
     neural_network = None
     training_set_inputs = None
     if train_filename is not None:
@@ -236,11 +237,11 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
 
         if create_nn is not None:
             # Calculate the number of inputs and outputs from the data.
-            n_inputs, outputs_classes = get_n_inputs_outputs(training_set_inputs)
-            neural_network = initialize_network(create_nn, n_inputs, outputs_classes, biases)
+            n_inputs = get_n_inputs_outputs(training_set_inputs)
+            neural_network = initialize_network(create_nn, n_inputs, biases, activation_f, activation_f_derivative)
         else:
             layers, _ = read_network_layers_from_file(read_nn)
-            neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], sigmoid, sigmoid_derivative)
+            neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative)
 
         # Train neural network.
         neural_network.train(training_set_inputs, l_rate, number_of_epochs, visualize_every)
@@ -253,12 +254,12 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
 
         if neural_network is None:
             layers, _ = read_network_layers_from_file(read_nn)
-            neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], sigmoid, sigmoid_derivative)
+            neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative)
 
         # Test the neural network.
         accuracy, predicted_outputs = neural_network.test(testing_set_inputs)
         print("accuracy: %.3f" % accuracy)
 
         print_data(testing_set_inputs, predicted_outputs)
-        if visualize_every is not None:
-            plot_data(testing_set_inputs, predicted_outputs, training_set_inputs)
+        if len(testing_set_inputs[0]) == 2 and (visualize_every is not None or savefig_filename is not None):
+            plot_data(testing_set_inputs, predicted_outputs, visualize_every, savefig_filename, training_set_inputs)

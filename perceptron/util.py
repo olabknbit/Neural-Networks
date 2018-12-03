@@ -1,3 +1,4 @@
+import numpy as np
 from numpy import exp
 
 
@@ -24,6 +25,14 @@ def reLu(activation):
 
 def reLu_derivative(output):
     return 0 if output < 0 else 1
+
+
+def tanh(x):
+    return np.tanh(x)
+
+
+def tanh_derivative(x):
+    return 1.0 - np.tanh(x)**2
 
 
 # Sigmoid transfer function

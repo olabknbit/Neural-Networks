@@ -9,8 +9,8 @@ def main():
     parser.add_argument('action', choices=['regression', 'classification'],
                         help='Choose mode either \'regression\' or \'classification\'.')
 
-    parser.add_argument('activation', choices=['sigmoid', 'relu'],
-                        help='Choose mode either \'sigmoid\' or \'relu\'.')
+    parser.add_argument('activation', choices=['sigmoid', 'relu', 'tanh'],
+                        help='Choose mode either \'sigmoid\' or \'relu\' or \'tanh\'.')
 
     parser.add_argument('--train_filename', type=str, help='Name of a file containing training data', required=False)
     parser.add_argument('--test_filename', type= str, help='Name of a file containing testing data')
@@ -18,6 +18,7 @@ def main():
                         help='When creating a nn from scratch; number of neurons for each layer',
                         required=False)
     parser.add_argument('--save_nn',  type=str, help='Name of a file to save trained model to.')
+    parser.add_argument('--savefig_filename', type=str, help='Name of a file to save plot to.')
     parser.add_argument('-e', '--number_of_epochs', type=int, help='Number of epochs (iterations) for the NN to run',
                         required=False, default=10000)
     parser.add_argument('--read_nn', type=str, help='When reading existing nn from a file; filename')
@@ -53,16 +54,20 @@ def main():
         from util import sigmoid, sigmoid_derivative
         activation_f, activation_f_derivative = sigmoid, sigmoid_derivative
     elif args.activation == 'relu':
-        from util import sigmoid, sigmoid_derivative, reLu, reLu_derivative
+        from util import reLu, reLu_derivative
         activation_f, activation_f_derivative = reLu, reLu_derivative
+    elif args.activation == 'tanh':
+        from util import tanh, tanh_derivative
+        activation_f, activation_f_derivative = tanh, tanh_derivative
     else:
-        print('Sorry, second positional argument has to be either \'sigmoid\' or \'relu\'.')
+        print('Sorry, second positional argument has to be either \'sigmoid\' or \'relu\' or \'tanh\'.')
         exit(1)
 
     if args.action == 'regression':
         import regression
         regression.main(args.train_filename, args.test_filename, args.create_nn, args.save_nn, args.read_nn,
-                        args.number_of_epochs, args.visualize_every, args.l_rate, args.biases)
+                        args.number_of_epochs, args.visualize_every, args.l_rate, args.biases, args.savefig_filename,
+                        activation_f, activation_f_derivative)
     elif args.action == 'classification':
         import classification
         classification.main(args.train_filename, args.test_filename, args.create_nn, args.save_nn, args.read_nn,
