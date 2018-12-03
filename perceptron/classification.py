@@ -13,7 +13,7 @@ class NeuronLayer:
 
     # Calculate what are the outputs of the layer for the given inputs.
     def forward_propagate(self, inputs, activation_f):
-        from perceptron.util import activate
+        from util import activate
         outputs = []
         for neuron in self.neurons:
             activation = activate(neuron['weights'], inputs)
@@ -212,7 +212,7 @@ def initialize_network(neurons, n_inputs, outputs_classes, biases, activation_f,
 
 def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_epochs, visualize_every, l_rate, biases,
          activation_f, activation_f_derivative):
-    from perceptron.util import write_network_to_file, read_network_layers_from_file
+    from util import write_network_to_file, read_network_layers_from_file
 
 
     neural_network = None
