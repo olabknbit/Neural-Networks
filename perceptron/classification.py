@@ -248,5 +248,6 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
         accuracy, predicted_outputs = neural_network.test(testing_set_inputs)
         print("accuracy: %.3f" % accuracy)
 
-        # Plot test data. Dots with black egdes are the ones that didn't get classified correctly.
-        plot_data(testing_set_inputs, outputs_classes, predicted_outputs, accuracy, save_nn)
+        if visualize_every is not None:
+            # Plot test data. Dots with black egdes are the ones that didn't get classified correctly.
+            plot_data(testing_set_inputs, outputs_classes, predicted_outputs, accuracy, save_nn)

@@ -260,4 +260,5 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
         print("accuracy: %.3f" % accuracy)
 
         print_data(testing_set_inputs, predicted_outputs)
-        plot_data(testing_set_inputs, predicted_outputs, training_set_inputs)
+        if visualize_every is not None:
+            plot_data(testing_set_inputs, predicted_outputs, training_set_inputs)
