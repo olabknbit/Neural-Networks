@@ -49,6 +49,8 @@ def read_network_layers_from_file(filename):
     with open(filename, 'r') as file:
         rows = file.readlines()
         layers = [eval(row) for row in rows[1:]]
-        output_classes = eval(rows[0])
-        return layers, output_classes
+        output_classes = None
+        if rows[0].strip() is not None and rows[0] != '\n':
+            output_classes = eval(rows[0])
 
+        return layers, output_classes

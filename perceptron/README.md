@@ -8,6 +8,12 @@ The project was implemented for Neural Networks class at Warsaw University of Te
 
 ## How to run
 
+For classification:
 ```bash
 python perceptron/main.py classification sigmoid --test_filename perceptron/projekt1/classification/data.simple.test.100.csv --train_filename perceptron/projekt1/classification/data.simple.train.100.csv --create_nn 3
+```
+
+For regression:
+```bash
+python perceptron/main.py regression sigmoid --test_filename perceptron/projekt1/regression/data.activation.test.100.csv --train_filename perceptron/projekt1/regression/data.activation.train.100.csv --create_nn 3
 ```

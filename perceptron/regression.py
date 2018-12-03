@@ -113,7 +113,7 @@ class NeuralNetwork():
                 from util import read_network_layers_from_file, write_network_to_file
                 write_network_to_file("temp", self)
                 layers, _ = read_network_layers_from_file("temp")
-                visualize.main(layers, [], str(epoch))
+                visualize.main(layers, str(epoch))
                 print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, iter_error))
 
     def get_weights(self):
