@@ -14,9 +14,18 @@ def get_hours_filename(n, buses):
     return PREFIX + 'hours-' + str(n) + '-' + str(buses) + '.txt'
 
 
+def get_train_test_data_filename(lines, stops, trips, transfers, n, buses, mode='train'):
+    str_buses = '-'.join([str(bus) for bus in buses])
+    return PREFIX + mode + '_data-' + str(lines) + '-lines-' + str(stops) + '-stops-' + str(trips) + '-M-' + \
+           str(transfers) + '-transfers-' + str(n) + '-N-' + str_buses + '-buses.txt'
+
+
 def get_train_data_filename(lines, stops, trips, transfers, n, buses):
-    return PREFIX + 'train_data-' + str(lines) + '-lines-' + str(stops) + '-stops-' + str(trips) + '-M-' + \
-           str(transfers) + '-transfers-' +str(n) + '-' + str(buses) + '.txt'
+    return get_train_test_data_filename(lines, stops, trips, transfers, n, buses, mode='train')
+
+
+def get_test_data_filename(lines, stops, trips, transfers, n, buses):
+    return get_train_test_data_filename(lines, stops, trips, transfers, n, buses, mode='test')
 
 
 def get_routes_parsed_info(routes_filename):

@@ -1,12 +1,18 @@
-def generate_train_data(routes_filename, trips_filename, hours_filename, train_data_filename):
+def generate_test_train_data(routes_filename, trips_filename, hours_filename, train_data_filename, test_data_filename):
     import simulator
     results = simulator.run_simulator(routes_filename, trips_filename, hours_filename)
 
-    with open(hours_filename, 'r') as hours_file, open(train_data_filename, 'w') as train_data_file:
-        for result, line in zip(results, hours_file.readlines()):
+    def write_data(data, file):
+        for result, line in data:
             hours_set = eval(line)
-            [train_data_file.write(str(hour) + ',') for hours in hours_set for hour in hours]
-            train_data_file.write(str(result) + '\n')
+            [file.write(str(hour) + ',') for hours in hours_set for hour in hours]
+            file.write(str(result) + '\n')
+
+    with open(hours_filename, 'r') as hours_file, open(train_data_filename, 'w') as train_data_file, open(test_data_filename, 'w') as test_data_file:
+        train_n = int(len(results) * 0.4)
+        data = zip(results, hours_file.readlines())
+        write_data(data[:train_n], train_data_file)
+        write_data(data[train_n:], test_data_file)
     print(min(results))
 
 
@@ -28,7 +34,9 @@ def main():
     trips_filename = util.get_trips_filename(args.routes_lines, args.routes_stops, args.trips_m, args.trips_transfers)
     hours_filename = util.get_hours_filename(args.hours_n, args.hours_buses)
     train_data_filename = util.get_train_data_filename(args.routes_lines, args.routes_stops, args.trips_m, args.trips_transfers, args.hours_n, args.hours_buses)
-    generate_train_data(routes_filename, trips_filename, hours_filename, train_data_filename)
+    test_data_filename = util.get_test_data_filename(args.routes_lines, args.routes_stops, args.trips_m, args.trips_transfers, args.hours_n, args.hours_buses)
+
+    generate_test_train_data(routes_filename, trips_filename, hours_filename, train_data_filename, test_data_filename)
 
 
 if __name__ == "__main__":
