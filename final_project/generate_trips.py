@@ -16,7 +16,6 @@ def get_random_stop_and_line_and_start_time(stops, lines):
     line = lines[random.randint(0, len(lines) - 1)]
     r = random.randint(0, len(stops[line]) - 1)
     stop = stops[line].keys()[r]
-    # print(stops[line].keys()[r])
     start_time = random.randint(0, 500)
     return stop, line, start_time
 
@@ -26,7 +25,6 @@ def go_somewhere_from_stop_using_line(stops, stop, line):
     def should_continue():
         return random.random() < 0.5
 
-    print(stops[line], stop, line)
     _, stop = stops[line][stop]
     while should_continue() and stop in stops[line].keys():
         _, stop = stops[line][stop]
@@ -36,7 +34,6 @@ def go_somewhere_from_stop_using_line(stops, stop, line):
 def get_transfer_lines(stops, lines, stop, line):
     transfer_lines = []
     for l in lines:
-        print('tl', l, stop, stops[l].keys())
         if stop in stops[l].keys() and l != line:
             transfer_lines.append(l)
     return transfer_lines
@@ -65,17 +62,13 @@ def generate_trips(routes_filename, trips_filename, trips_m, transfers_max):
 
     with open(trips_filename, 'w') as trips_file:
         for i in range(trips_m):
-            print('start trip')
             stop, line, start_time = get_random_stop_and_line_and_start_time(stops, lines)
             trip = Trip(start_time, stop)
             n_transfers = 0
             while n_transfers < transfers_max:
-                print(stop, line)
-                print(stops[line])
                 stop = go_somewhere_from_stop_using_line(stops, stop, line)
                 transfer_lines = get_transfer_lines(stops, lines, stop, line)
                 trip.append(stop, line)
-                print('transfer_lines', stop, transfer_lines)
                 # If transfer is not possible:
                 if not transfer_lines:
                     break
@@ -106,4 +99,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
