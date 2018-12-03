@@ -1,3 +1,19 @@
+PREFIX = 'final_project/data/'
+DAY_LENGTH = 500
+
+
+def get_routes_filename(lines, stops):
+    return PREFIX + 'routes-' + str(lines) + '-lines-' + str(stops) + '-stops.txt'
+
+
+def get_trips_filename(lines, stops, trips, transfers):
+    return PREFIX + 'trips-' + str(lines) + '-lines-' + str(stops) + '-stops-' + str(trips) + '-M-' + str(transfers) + 'transfers.txt'
+
+
+def get_hours_filename(n, buses):
+    return PREFIX + 'hours-' + str(n) + '-' + str(buses) + '.txt'
+
+
 def get_routes_parsed_info(routes_filename):
     stops = dict()
     lines = []

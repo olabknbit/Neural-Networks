@@ -1,10 +1,4 @@
-import random
-PREFIX = 'final_project/data/'
-DAY_LENGTH = 500
-
-
-def generate_filename(n, buses):
-    return PREFIX + 'hours-' + str(n) + '-' + str(buses) + '.txt'
+import random, util
 
 
 def generate_hours(buses, n, filename):
@@ -14,7 +8,7 @@ def generate_hours(buses, n, filename):
             for bus in buses:
                 line_hours = []
                 for _ in range(bus):
-                    line_hours.append(random.randint(0, DAY_LENGTH))
+                    line_hours.append(random.randint(0, util.DAY_LENGTH))
                 hours.append(line_hours)
             file.write(str(hours))
             file.write('\n')
@@ -33,7 +27,7 @@ def main():
     # Seed the random number generator
     random.seed(args.seed)
 
-    filename = generate_filename(args.n, args.buses)
+    filename = util.get_hours_filename(args.n, args.buses)
     generate_hours(args.buses, args.n, filename)
 
 

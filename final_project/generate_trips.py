@@ -1,14 +1,4 @@
-import random
-PREFIX = 'final_project/data/'
-DAY_LENGTH = 500
-
-
-def get_routes_filename(lines, stops):
-    return PREFIX + 'routes-' + str(lines) + '-lines-' + str(stops) + '-stops.txt'
-
-
-def get_trips_filename(lines, stops, trips, transfers):
-    return PREFIX + 'trips-' + str(lines) + '-lines-' + str(stops) + '-stops-' + str(trips) + '-M-' + str(transfers) + 'transfers.txt'
+import random, util
 
 
 # Get starting params.
@@ -16,7 +6,7 @@ def get_random_stop_and_line_and_start_time(stops, lines):
     line = lines[random.randint(0, len(lines) - 1)]
     r = random.randint(0, len(stops[line]) - 1)
     stop = stops[line].keys()[r]
-    start_time = random.randint(0, 500)
+    start_time = random.randint(0, util.DAY_LENGTH)
     return stop, line, start_time
 
 
@@ -57,7 +47,6 @@ class Trip:
 
 
 def generate_trips(routes_filename, trips_filename, trips_m, transfers_max):
-    import util
     _, stops, lines, first_stops = util.get_routes_parsed_info(routes_filename)
 
     with open(trips_filename, 'w') as trips_file:
@@ -92,8 +81,8 @@ def main():
     # Seed the random number generator
     random.seed(args.seed)
 
-    routes_filename = get_routes_filename(args.routes_lines, args.routes_stops)
-    trips_filename = get_trips_filename(args.routes_lines, args.routes_stops, args.trips_m, args.trips_transfers)
+    routes_filename = util.get_routes_filename(args.routes_lines, args.routes_stops)
+    trips_filename = util.get_trips_filename(args.routes_lines, args.routes_stops, args.trips_m, args.trips_transfers)
     generate_trips(routes_filename, trips_filename, args.trips_m, args.trips_transfers)
 
 
