@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def get_random_naurons(n_inputs, n_neurons):
+def get_random_neurons(n_inputs, n_neurons):
     from numpy import random
     # random numbers from range [0; 0.3) are proven to be best
     return [{'weights': [random.random() * 0.3 for _ in range(n_inputs)]} for _ in range(n_neurons)]
@@ -16,7 +16,7 @@ class NeuronLayer:
 
     # Calculate what are the outputs of the layer for the given inputs.
     def forward_propagate(self, inputs, activation_f):
-        from perceptron.util import activate
+        from util import activate
         outputs = []
         for neuron in self.neurons:
             activation = activate(neuron['weights'], inputs)
@@ -41,7 +41,7 @@ class NeuronLayer:
         return self.neurons
 
     def linear_propagate(self, inputs):
-        from perceptron.util import activate, linear
+        from util import activate, linear
         outputs = []
         for neuron in self.neurons:
             activation = activate(neuron['weights'], inputs)
@@ -71,7 +71,7 @@ class NeuralNetwork():
 
     # Calculate 'delta' for every neuron. This will then be used to update the weights of the neurons.
     def backward_propagate(self, expected_val):
-        from perceptron.util import linear_derivative
+        from util import linear_derivative
         # Update last layer's (output layer's) 'delta' field.
         # This field is needed to calculate 'delta' fields in previous (closer to input layer) layers,
         # so then we can update the weights.
@@ -109,8 +109,8 @@ class NeuralNetwork():
                 self.backward_propagate(expected)
                 self.update_weights(row, l_rate)
             if epoch % visualize_every == 0:
-                from perceptron import visualize
-                from perceptron.util import read_network_layers_from_file, write_network_to_file
+                import visualize
+                from util import read_network_layers_from_file, write_network_to_file
                 write_network_to_file("temp", self)
                 layers, _ = read_network_layers_from_file("temp")
                 visualize.main(layers, [], str(epoch))
@@ -172,44 +172,45 @@ def plot_data(data, predicted_outputs, training_data=None):
 
     plt.show()
 
+
 def print_data(data, predicted_outputs):
     Error = 0.0
     SE = 0.0
     RAEDivider = 0.0
     RRAEDivider = 0.0
-    AvgData = sum(predicted_outputs)/len(predicted_outputs)
+    AvgData = sum(predicted_outputs) / len(predicted_outputs)
 
     for i, row in enumerate(data):
         Error += abs(predicted_outputs[i] - row[1])
-        SE += (predicted_outputs[i] - row[1])**2
+        SE += (predicted_outputs[i] - row[1]) ** 2
         RAEDivider += abs(AvgData - row[1])
-        RRAEDivider += (AvgData - row[1])**2
+        RRAEDivider += (AvgData - row[1]) ** 2
 
-    AvgError = 1.0 * Error/(1.0*len(data))
-    MSE = 1.0 * SE/(1.0*len(data))
-    RMSE = MSE**0.5
+    AvgError = 1.0 * Error / (1.0 * len(data))
+    MSE = 1.0 * SE / (1.0 * len(data))
+    RMSE = MSE ** 0.5
     RAE = Error / RAEDivider
     RRAE = SE / RRAEDivider
 
-    print('Error = %.3f' %(Error))
-    print('AvgError = %.3f' %(AvgError))
-    print('MSE = %.3f' %(MSE))
-    print('RMSE = %.3f' %(RMSE))
-    print('RAE = %.3f' %(RAE))
-    print('RRAE = %.3f' %(RRAE))
+    print('Error = %.3f' % Error)
+    print('AvgError = %.3f' % AvgError)
+    print('MSE = %.3f' % MSE)
+    print('RMSE = %.3f' % RMSE)
+    print('RAE = %.3f' % RAE)
+    print('RRAE = %.3f' % RRAE)
 
     err = 0.0
-    for i,pred in enumerate(predicted_outputs):
+    for i, pred in enumerate(predicted_outputs):
         min = float('inf')
 
-        for j,row in enumerate(data):
-            if(min > ((row[1]- pred)**2 + (row[0]- data[i][0])**2)**0.5):
-                min = ((row[1]- pred)**2 + (row[0]- data[i][0])**2)**0.5
+        for j, row in enumerate(data):
+            if min > ((row[1] - pred) ** 2 + (row[0] - data[i][0]) ** 2) ** 0.5:
+                min = ((row[1] - pred) ** 2 + (row[0] - data[i][0]) ** 2) ** 0.5
         err += min
 
+    print('Sum of distances = %.3f' % (err))
+    print('Avg distance = %.3f' % (err / len(data)))
 
-    print('Sum of distances = %.3f' %(err))
-    print('Avg distance = %.3f' %(err/len(data)))
 
 def initialize_network(neurons, n_inputs, outputs_classes, biases):
     # Combine the layers to create a neural network
@@ -218,16 +219,16 @@ def initialize_network(neurons, n_inputs, outputs_classes, biases):
     n_in = n_inputs
     bias = 1 if biases else 0
     for n_neurons in neurons:
-        layers.append(NeuronLayer(get_random_naurons(n_in + bias, n_neurons)))
+        layers.append(NeuronLayer(get_random_neurons(n_in + bias, n_neurons)))
         n_in = n_neurons
-    layers.append(NeuronLayer(get_random_naurons(n_in + bias, n_outputs)))
+    layers.append(NeuronLayer(get_random_neurons(n_in + bias, n_outputs)))
 
-    from perceptron.util import sigmoid, sigmoid_derivative
+    from util import sigmoid, sigmoid_derivative
     return NeuralNetwork(layers, sigmoid, sigmoid_derivative)
 
 
 def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_epochs, visualize_every, l_rate, biases):
-    from perceptron.util import read_network_layers_from_file, write_network_to_file
+    from util import read_network_layers_from_file, write_network_to_file, sigmoid, sigmoid_derivative
     neural_network = None
     training_set_inputs = None
     if train_filename is not None:
@@ -238,7 +239,6 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
             n_inputs, outputs_classes = get_n_inputs_outputs(training_set_inputs)
             neural_network = initialize_network(create_nn, n_inputs, outputs_classes, biases)
         else:
-            from perceptron.util import sigmoid, sigmoid_derivative
             layers, _ = read_network_layers_from_file(read_nn)
             neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], sigmoid, sigmoid_derivative)
 
@@ -252,14 +252,12 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
         testing_set_inputs = read_file(test_filename)
 
         if neural_network is None:
-            from perceptron.util import sigmoid, sigmoid_derivative
             layers, _ = read_network_layers_from_file(read_nn)
             neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], sigmoid, sigmoid_derivative)
 
         # Test the neural network.
         accuracy, predicted_outputs = neural_network.test(testing_set_inputs)
         print("accuracy: %.3f" % accuracy)
-
 
         print_data(testing_set_inputs, predicted_outputs)
         plot_data(testing_set_inputs, predicted_outputs, training_set_inputs)

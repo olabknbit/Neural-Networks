@@ -1,4 +1,4 @@
-def get_random_naurons(n_inputs, n_neurons):
+def get_random_neurons(n_inputs, n_neurons):
     from numpy import random
     # random numbers from range [0; 0.3) are proven to be best
     return [{'weights': [random.random() * 0.3 for _ in range(n_inputs)]} for _ in range(n_neurons)]
@@ -103,7 +103,7 @@ class NeuralNetwork:
                 self.backward_propagate(expected)
                 # albo stochastic albo batchowe update TODO
                 self.update_weights(row, l_rate)
-            MSE = 1.0 * SE/(1.0*len(data_input))
+            MSE = 1.0 * SE / (1.0 * len(data_input))
             accuracy = correct / len(data_input)
             if epoch % visualize_every == 0:
                 print('>epoch=%d, lrate=%.3f, mse=%.3f, accuracy=%.3f' % (epoch, l_rate, MSE, accuracy))
@@ -188,7 +188,8 @@ def plot_data(data, outputs_classes, predicted_outputs, accuracy, filename):
         label_c = 'correct + %d/%d + (%f)' % (len_c, len_all, (len_c / len_all))
         label_i = 'incorrect + %d/%d + (%f)' % (len_i, len_all, (len_i / len_all))
         plt.plot(xc, yc, linestyle='none', marker='o', markerfacecolor=colors[i], markeredgecolor='none', label=label_c)
-        plt.plot(xi, yi, linestyle='none', marker='o', markerfacecolor=colors[i], markeredgecolor='black', label=label_i)
+        plt.plot(xi, yi, linestyle='none', marker='o', markerfacecolor=colors[i], markeredgecolor='black',
+                 label=label_i)
 
     plt.legend()
     plt.title(filename + ' ' + str(accuracy))
@@ -203,9 +204,9 @@ def initialize_network(neurons, n_inputs, outputs_classes, biases, activation_f,
     bias = 1 if biases else 0
     # Create a layer with n_neurons neurons, each with n_inputs.
     for n_neurons in neurons:
-        layers.append(NeuronLayer(get_random_naurons(n_in + bias, n_neurons)))
+        layers.append(NeuronLayer(get_random_neurons(n_in + bias, n_neurons)))
         n_in = n_neurons
-    layers.append(NeuronLayer(get_random_naurons(n_in + bias, n_outputs)))
+    layers.append(NeuronLayer(get_random_neurons(n_in + bias, n_outputs)))
 
     return NeuralNetwork(layers, activation_f, activation_f_derivative, outputs_classes)
 
@@ -213,7 +214,6 @@ def initialize_network(neurons, n_inputs, outputs_classes, biases, activation_f,
 def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_epochs, visualize_every, l_rate, biases,
          activation_f, activation_f_derivative):
     from util import write_network_to_file, read_network_layers_from_file
-
 
     neural_network = None
     outputs_classes = None
@@ -223,10 +223,12 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
         if create_nn is not None:
             # Calculate the number of inputs and outputs from the data.
             n_inputs, outputs_classes = get_n_inputs_outputs(training_set_inputs)
-            neural_network = initialize_network(create_nn, n_inputs, outputs_classes, biases, activation_f, activation_f_derivative)
+            neural_network = initialize_network(create_nn, n_inputs, outputs_classes, biases, activation_f,
+                                                activation_f_derivative)
         else:
             layers, outputs_classes = read_network_layers_from_file(read_nn)
-            neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative, outputs_classes)
+            neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative,
+                                           outputs_classes)
 
         # Train neural network.
         neural_network.train(training_set_inputs, l_rate, number_of_epochs, visualize_every)
@@ -239,7 +241,8 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
 
         if neural_network is None:
             layers, outputs_classes = read_network_layers_from_file(read_nn)
-            neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative, outputs_classes)
+            neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative,
+                                           outputs_classes)
 
         # Test the neural network.
         accuracy, predicted_outputs = neural_network.test(testing_set_inputs)
