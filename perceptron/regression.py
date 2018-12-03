@@ -108,7 +108,7 @@ class NeuralNetwork():
                 iter_error += np.sqrt(expected ** 2)
                 self.backward_propagate(expected)
                 self.update_weights(row, l_rate)
-            if epoch % visualize_every == 0:
+            if visualize_every is not None and epoch % visualize_every == 0:
                 import visualize
                 from util import read_network_layers_from_file, write_network_to_file
                 write_network_to_file("temp", self)

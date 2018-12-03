@@ -105,7 +105,7 @@ class NeuralNetwork:
                 self.update_weights(row, l_rate)
             MSE = 1.0 * SE / (1.0 * len(data_input))
             accuracy = correct / len(data_input)
-            if epoch % visualize_every == 0:
+            if visualize_every is not None and epoch % visualize_every == 0:
                 print('>epoch=%d, lrate=%.3f, mse=%.3f, accuracy=%.3f' % (epoch, l_rate, MSE, accuracy))
                 # print(self.get_weights())
 

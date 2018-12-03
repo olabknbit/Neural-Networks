@@ -23,7 +23,7 @@ def main():
     parser.add_argument('--read_nn', type=str, help='When reading existing nn from a file; filename')
     parser.add_argument('-v', '--visualize_every', type=int,
                         help='How ofter (every n iterations) print neuron\'s weights.',
-                        required=False, default=1000)
+                        required=False)
     parser.add_argument('--l_rate', type=float, help='Learning rate', required=False, default=0.001)
 
     parser.add_argument('--seed', type=int, help='Random seed int', required=False, default=1)
