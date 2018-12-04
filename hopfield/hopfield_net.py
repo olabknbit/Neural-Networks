@@ -1,4 +1,5 @@
 import numpy as np
+
 from util import ImagePrinter, ResponsiveImagePrinter
 
 
@@ -69,7 +70,7 @@ class Net:
                 i = 0
             else:
                 i += 1
-            if i>=len(x_input):
+            if i >= len(x_input):
                 break
 
             if visualize == -1:

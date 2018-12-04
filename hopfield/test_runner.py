@@ -1,6 +1,7 @@
-from util import read_file
-import hopfield_net
 from tabulate import tabulate
+
+import hopfield_net
+from util import read_file
 
 
 def main():
@@ -33,7 +34,7 @@ def main():
                     flip = int(width * height * perc)
                     accs = 0
                     len = 10
-                    for seed in range(0,len):
+                    for seed in range(0, len):
                         accuracy = model.test(images[:size], width, height, seed, flip, 0, 2000, action == 'sync')
                         accs += accuracy
                     accuracy = accs / len
