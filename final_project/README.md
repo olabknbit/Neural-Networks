@@ -13,4 +13,6 @@ In order to solve that problem for a given routes and trips, we are going to use
 In order to get the best model for a given problem, we're going to use a genetic algorithm to create a mutated perceptron.
 
 ## How to run
-TODO
+```bash
+python final_project/run_experiments.py
+```
