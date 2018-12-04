@@ -1,4 +1,4 @@
-PREFIX = 'final_project/data/'
+PREFIX = 'neural_networks/final_project/data/'
 DAY_LENGTH = 500
 
 
@@ -7,17 +7,21 @@ def get_routes_filename(lines, stops):
 
 
 def get_trips_filename(lines, stops, trips, transfers):
-    return PREFIX + 'trips-' + str(lines) + '-lines-' + str(stops) + '-stops-' + str(trips) + '-M-' + str(transfers) + 'transfers.txt'
+    return PREFIX + 'trips-' + str(lines) + '-lines-' + str(stops) + '-stops-' + str(trips) + '-M-' + str(transfers) + \
+           '-transfers.txt'
+
+
+def str_buses(buses):
+    return '-'.join([str(bus) for bus in buses])
 
 
 def get_hours_filename(n, buses):
-    return PREFIX + 'hours-' + str(n) + '-' + str(buses) + '.txt'
+    return PREFIX + 'hours-' + str(n) + '-' + str_buses(buses) + '.txt'
 
 
 def get_train_test_data_filename(lines, stops, trips, transfers, n, buses, mode='train'):
-    str_buses = '-'.join([str(bus) for bus in buses])
     return PREFIX + mode + '_data-' + str(lines) + '-lines-' + str(stops) + '-stops-' + str(trips) + '-M-' + \
-           str(transfers) + '-transfers-' + str(n) + '-N-' + str_buses + '-buses.txt'
+           str(transfers) + '-transfers-' + str(n) + '-N-' + str_buses(buses) + '-buses.txt'
 
 
 def get_train_data_filename(lines, stops, trips, transfers, n, buses):
@@ -36,7 +40,7 @@ def get_routes_parsed_info(routes_filename):
         routes = file.readlines()
 
         for route in routes:
-            str_splt = map(str.strip, route.split(','))
+            str_splt = list(map(str.strip, route.split(',')))
             line = dict()
             line_id = str_splt[0]
             first_stop = str_splt[2]

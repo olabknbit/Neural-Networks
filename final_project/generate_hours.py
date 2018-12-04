@@ -1,7 +1,8 @@
 import random, util
 
 
-def generate_hours(buses, n, filename):
+def generate_hours(buses, n):
+    filename = util.get_hours_filename(n, buses)
     with open(filename, 'w') as file:
         for _ in range(n):
             hours = []
@@ -27,8 +28,7 @@ def main():
     # Seed the random number generator
     random.seed(args.seed)
 
-    filename = util.get_hours_filename(args.n, args.buses)
-    generate_hours(args.buses, args.n, filename)
+    generate_hours(args.buses, args.n)
 
 
 if __name__ == "__main__":

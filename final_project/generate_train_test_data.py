@@ -13,7 +13,17 @@ def generate_test_train_data(routes_filename, trips_filename, hours_filename, tr
         data = zip(results, hours_file.readlines())
         write_data(data[:train_n], train_data_file)
         write_data(data[train_n:], test_data_file)
-    print(min(results))
+
+
+def generate_test_train_data_without_filenames(routes_lines, routes_stops, trips_m, trips_transfers, hours_n, hours_buses):
+    import util
+    routes_filename = util.get_routes_filename(routes_lines, routes_stops)
+    trips_filename = util.get_trips_filename(routes_lines, routes_stops, trips_m, trips_transfers)
+    hours_filename = util.get_hours_filename(hours_n, hours_buses)
+    train_data_filename = util.get_train_data_filename(routes_lines, routes_stops, trips_m, trips_transfers, hours_n, hours_buses)
+    test_data_filename = util.get_test_data_filename(routes_lines, routes_stops, trips_m,trips_transfers, hours_n, hours_buses)
+
+    generate_test_train_data(routes_filename, trips_filename, hours_filename, train_data_filename, test_data_filename)
 
 
 def main():

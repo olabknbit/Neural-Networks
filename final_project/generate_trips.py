@@ -5,7 +5,8 @@ import random, util
 def get_random_stop_and_line_and_start_time(stops, lines):
     line = lines[random.randint(0, len(lines) - 1)]
     r = random.randint(0, len(stops[line]) - 1)
-    stop = stops[line].keys()[r]
+    # print(list(stops[line].keys()))
+    stop = list(stops[line].keys())[r]
     start_time = random.randint(0, util.DAY_LENGTH)
     return stop, line, start_time
 
@@ -46,7 +47,10 @@ class Trip:
         file.write('\n')
 
 
-def generate_trips(routes_filename, trips_filename, trips_m, transfers_max):
+def generate_trips(routes_lines, routes_stops, trips_m, transfers_max):
+    routes_filename = util.get_routes_filename(routes_lines, routes_stops)
+    trips_filename = util.get_trips_filename(routes_lines, routes_stops, trips_m, transfers_max)
+
     _, stops, lines, first_stops = util.get_routes_parsed_info(routes_filename)
 
     with open(trips_filename, 'w') as trips_file:
@@ -54,7 +58,7 @@ def generate_trips(routes_filename, trips_filename, trips_m, transfers_max):
             stop, line, start_time = get_random_stop_and_line_and_start_time(stops, lines)
             trip = Trip(start_time, stop)
             n_transfers = 0
-            while n_transfers < transfers_max:
+            while n_transfers <= transfers_max:
                 stop = go_somewhere_from_stop_using_line(stops, stop, line)
                 transfer_lines = get_transfer_lines(stops, lines, stop, line)
                 trip.append(stop, line)
@@ -63,6 +67,7 @@ def generate_trips(routes_filename, trips_filename, trips_m, transfers_max):
                     break
                 else:
                     line = transfer_lines[random.randint(0, len(transfer_lines) - 1)]
+                    n_transfers += 1
             trip.write_to_file(trips_file)
 
 
@@ -81,9 +86,7 @@ def main():
     # Seed the random number generator
     random.seed(args.seed)
 
-    routes_filename = util.get_routes_filename(args.routes_lines, args.routes_stops)
-    trips_filename = util.get_trips_filename(args.routes_lines, args.routes_stops, args.trips_m, args.trips_transfers)
-    generate_trips(routes_filename, trips_filename, args.trips_m, args.trips_transfers)
+    generate_trips(args.routes_lines, args.routes_stops, args.trips_m, args.trips_transfers)
 
 
 if __name__ == "__main__":
