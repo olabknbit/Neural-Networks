@@ -3,6 +3,4 @@
 __pycache__/
 *.pyc
 nn/
-final_project/data/
-perceptron/tmp/
 
