@@ -258,8 +258,11 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
 
         # Test the neural network.
         accuracy, predicted_outputs = neural_network.test(testing_set_inputs)
-        print("accuracy: %.3f" % accuracy)
+        # print("accuracy: %.3f" % accuracy)
 
         print_data(testing_set_inputs, predicted_outputs)
+
         if len(testing_set_inputs[0]) == 2 and (visualize_every is not None or savefig_filename is not None):
             plot_data(testing_set_inputs, predicted_outputs, visualize_every, savefig_filename, training_set_inputs)
+        return accuracy
+
