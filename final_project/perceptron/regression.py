@@ -111,9 +111,11 @@ class NeuralNetwork():
             if visualize_every is not None and epoch % visualize_every == 0:
                 import visualize
                 from util import read_network_layers_from_file, write_network_to_file
-                write_network_to_file("temp", self)
-                layers, _ = read_network_layers_from_file("temp")
+                tmp_filename = "tmp/temp"
+                write_network_to_file(tmp_filename, self)
+                layers, _ = read_network_layers_from_file(tmp_filename)
                 visualize.main(layers, str(epoch))
+            if epoch % 100 == 0:
                 print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, iter_error))
 
     def get_weights(self):
@@ -210,7 +212,7 @@ def print_data(data, predicted_outputs):
                 min = ((row[1] - pred) ** 2 + (row[0] - data[i][0]) ** 2) ** 0.5
         err += min
 
-    print('Sum of distances = %.3f' % (err))
+    print('Sum of distances = %.3f' % err)
     print('Avg distance = %.3f' % (err / len(data)))
 
 
@@ -258,11 +260,9 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
 
         # Test the neural network.
         accuracy, predicted_outputs = neural_network.test(testing_set_inputs)
-        # print("accuracy: %.3f" % accuracy)
 
         print_data(testing_set_inputs, predicted_outputs)
 
         if len(testing_set_inputs[0]) == 2 and (visualize_every is not None or savefig_filename is not None):
             plot_data(testing_set_inputs, predicted_outputs, visualize_every, savefig_filename, training_set_inputs)
         return accuracy
-
