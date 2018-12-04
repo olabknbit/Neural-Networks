@@ -1,4 +1,6 @@
 from numpy import random
+
+
 # TODO: refactor neural network into separate file for clarity and DRY
 
 
@@ -13,12 +15,14 @@ def main():
                         help='Choose mode either \'sigmoid\' or \'relu\' or \'tanh\'.')
 
     parser.add_argument('--train_filename', type=str, help='Name of a file containing training data', required=False)
-    parser.add_argument('--test_filename', type= str, help='Name of a file containing testing data')
+    parser.add_argument('--test_filename', type=str, help='Name of a file containing testing data')
     parser.add_argument('--create_nn', nargs='*', type=int,
                         help='When creating a nn from scratch; number of neurons for each layer',
                         required=False)
+
     parser.add_argument('--save_nn',  type=str, help='Name of a file to save trained model to.')
     parser.add_argument('--savefig_filename', type=str, help='Name of a file to save plot to.')
+
     parser.add_argument('-e', '--number_of_epochs', type=int, help='Number of epochs (iterations) for the NN to run',
                         required=False, default=10000)
     parser.add_argument('--read_nn', type=str, help='When reading existing nn from a file; filename')

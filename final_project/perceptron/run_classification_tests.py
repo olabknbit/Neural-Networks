@@ -26,7 +26,8 @@ def main():
                     print(save_nn)
 
                     # activation_f, activation_f_derivative = reLu, reLu_derivative
-                    classification.main(train_filename, test_filename, nn, save_nn, None, n_epochs, n_epochs / 10, 0.001,
+                    classification.main(train_filename, test_filename, nn, save_nn, None, n_epochs, n_epochs / 10,
+                                        0.001,
                                         True, activation_f, activation_f_derivative)
 
 
