@@ -61,7 +61,7 @@ def run(stops_orig, lines, first_stops, hours_l, trips):
                 stop = next_stop
 
             overall_t += start_time - t
-        results.append(overall_t/len(trips))
+        results.append(overall_t / len(trips))
     return results
 
 
@@ -130,7 +130,8 @@ def main():
     # Seed the random number generator
     random.seed(args.seed)
 
-    run_simulator_with_args(args.routes_lines, args.routes_stops, args.trips_m, args.trips_transfers, args.hours_n, args.hours_buses)
+    run_simulator_with_args(args.routes_lines, args.routes_stops, args.trips_m, args.trips_transfers, args.hours_n,
+                            args.hours_buses)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-PREFIX = 'neural_networks/final_project/data/'
+PREFIX = 'final_project/data/'
 DAY_LENGTH = 500
 
 

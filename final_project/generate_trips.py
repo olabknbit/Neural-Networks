@@ -1,4 +1,6 @@
-import random, util
+import random
+
+import util
 
 
 # Get starting params.
