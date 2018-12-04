@@ -1,6 +1,6 @@
 def main():
-    from perceptron import classification
-    from perceptron.util import reLu, reLu_derivative
+    import classification
+    from util import reLu, reLu_derivative
 
     prefix = 'projekt1-oddanie/clasification/data'
     modes = ['circles']
