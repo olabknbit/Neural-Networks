@@ -35,8 +35,8 @@ class NeuronLayer:
 
     def update_weights(self, inputs, l_rate):
         for neuron in self.neurons:
-            for j in range(len(inputs)):
-                neuron['weights'][j] += l_rate * neuron['delta'] * inputs[j]
+            for j, input_j in enumerate(inputs):
+                neuron['weights'][j] += l_rate * neuron['delta'] * input_j
             neuron['weights'][-1] += l_rate * neuron['delta']
         return self.neurons
 
@@ -71,14 +71,13 @@ class NeuralNetwork():
 
     # Calculate 'delta' for every neuron. This will then be used to update the weights of the neurons.
     def backward_propagate(self, expected_val):
-        from util import linear_derivative
         # Update last layer's (output layer's) 'delta' field.
         # This field is needed to calculate 'delta' fields in previous (closer to input layer) layers,
         # so then we can update the weights.
         layer = self.layers[-1].neurons
         neuron = layer[0]
         error = (expected_val - neuron['output'])
-        neuron['delta'] = error * linear_derivative(neuron['output'])
+        neuron['delta'] = error * self.activation_f_derivative(neuron['output'])
 
         # Update other layers' 'delta' field, so we can later update wights based on value of this field.
         next_layer = layer
@@ -97,15 +96,16 @@ class NeuralNetwork():
             previous_layer = layer.update_weights(inputs, l_rate)
 
     def train(self, data_input, l_rate, n_iter, visualize_every):
+        last_error = - np.infty
         for epoch in range(n_iter):
             iter_error = 0.0
             for row in data_input:
                 # The net should only predict the class based on the features,
                 # so the last cell which represents the class is not passed forward.
-                outputs = self.forward_propagate(row[:-1])
+                output = self.forward_propagate(row[:-1])[0]
 
                 expected = row[-1]
-                iter_error += np.sqrt(expected ** 2)
+                iter_error += np.sqrt((expected - output) ** 2)
                 self.backward_propagate(expected)
                 self.update_weights(row, l_rate)
             if visualize_every is not None and epoch % visualize_every == 0:
@@ -117,6 +117,12 @@ class NeuralNetwork():
                 visualize.main(layers, str(epoch))
             if epoch % 100 == 0:
                 print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, iter_error))
+
+                # Stop training if iter_error not changing.
+                # TODO consider stochastic batches.
+                if abs(last_error - iter_error) < 0.001:
+                    break
+                last_error = iter_error
 
     def get_weights(self):
         return [str(layer.neurons) for layer in self.layers]
@@ -228,6 +234,15 @@ def initialize_network(neurons, n_inputs, biases, activation_f, activation_f_der
 
     return NeuralNetwork(layers, activation_f, activation_f_derivative)
 
+# TODO implement
+# def scale_data(y_train, y_test):
+#     min_y = min(y_train + y_test)
+#     max_y = max(y_train + y_test)
+#     y_train = [((y - min_y) / (max_y - min_y)) for y in y_train]
+#     y_test = [((y - min_y) / (max_y - min_y)) for y in y_test]
+#
+#     return y_train, y_test
+
 
 def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_epochs, visualize_every, l_rate, biases,
          savefig_filename, activation_f, activation_f_derivative):
@@ -236,6 +251,13 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
     training_set_inputs = None
     if train_filename is not None:
         training_set_inputs = read_file(train_filename)
+
+        # TODO prettify scaling data
+        xys = training_set_inputs
+        ys = [y for x,y in xys]
+        min_y = min(ys)
+        max_y = max(ys)
+        training_set_inputs = [(x, ((y - min_y)/(max_y - min_y))) for x, y in xys]
 
         if create_nn is not None:
             # Calculate the number of inputs and outputs from the data.
@@ -253,6 +275,9 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
 
     if test_filename is not None:
         testing_set_inputs = read_file(test_filename)
+        # TODO prettify scaling data here as well.
+        xys = testing_set_inputs
+        testing_set_inputs = [(x, ((y - min_y) / (max_y - min_y))) for x, y in xys]
 
         if neural_network is None:
             layers, _ = read_network_layers_from_file(read_nn)

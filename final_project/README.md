@@ -3,7 +3,7 @@
 For this project we are solving a complex problem of transportation:
 Given a set of tram/bus routes, and a set of passengers' trips, how to pick a set of departure hours for the buses from their init stops.
 
-In order to solve that problem for a given routes and trips, we are going to use an approach as below:
+In order to solve that problem for given routes and trips, we are going to use an approach as below:
 1. For a given set of routes and trips, generate N (quite big) sets of departure hours.
 2. For the generated set, calculate average trip time of all the passenger's trips.
 3. Feed the data from point 1 and 2 to the neural network so that it learns to approximate the data.
