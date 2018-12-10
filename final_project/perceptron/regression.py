@@ -35,8 +35,8 @@ class NeuronLayer:
 
     def update_weights(self, inputs, l_rate):
         for neuron in self.neurons:
-            for j, input_j in enumerate(inputs):
-                neuron['weights'][j] += l_rate * neuron['delta'] * input_j
+            for j in range(len(inputs)):
+                neuron['weights'][j] += l_rate * neuron['delta'] * inputs[j]
             neuron['weights'][-1] += l_rate * neuron['delta']
         return self.neurons
 
@@ -115,9 +115,9 @@ class NeuralNetwork():
                 write_network_to_file(tmp_filename, self)
                 layers, _ = read_network_layers_from_file(tmp_filename)
                 visualize.main(layers, str(epoch))
+
             if epoch % 100 == 0:
                 print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, iter_error))
-
                 # Stop training if iter_error not changing.
                 # TODO consider stochastic batches.
                 if abs(last_error - iter_error) < 0.001:
@@ -165,6 +165,7 @@ def get_n_inputs_outputs(data):
 def plot_data(test_data, predicted_outputs, visualize, savefig_filename, training_data=None):
     import matplotlib.pyplot as plt
     marker = '.'
+    plt.clf()
 
     test_data_x = [t[0] for t in test_data]
     test_data_y = [t[1] for t in test_data]
@@ -234,60 +235,52 @@ def initialize_network(neurons, n_inputs, biases, activation_f, activation_f_der
 
     return NeuralNetwork(layers, activation_f, activation_f_derivative)
 
-# TODO implement
-# def scale_data(y_train, y_test):
-#     min_y = min(y_train + y_test)
-#     max_y = max(y_train + y_test)
-#     y_train = [((y - min_y) / (max_y - min_y)) for y in y_train]
-#     y_test = [((y - min_y) / (max_y - min_y)) for y in y_test]
-#
-#     return y_train, y_test
+
+def scale_data(train_set_inputs, test_set_inputs):
+    y_train = [y for x, y in train_set_inputs]
+    y_test = [y for x, y in test_set_inputs]
+    min_y = min(y_train + y_test)
+    max_y = max(y_train + y_test)
+    train_set_inputs = [(x, (y - min_y) / (max_y - min_y)) for x,y in train_set_inputs]
+    test_set_inputs = [(x,(y - min_y) / (max_y - min_y)) for x,y in test_set_inputs]
+
+    return train_set_inputs, test_set_inputs
 
 
 def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_epochs, visualize_every, l_rate, biases,
          savefig_filename, activation_f, activation_f_derivative):
     from util import read_network_layers_from_file, write_network_to_file
-    neural_network = None
-    training_set_inputs = None
-    if train_filename is not None:
-        training_set_inputs = read_file(train_filename)
+    if train_filename is None or test_filename is None:
+        print('Both train and test filename has to be provided for scaling')
+        exit(1)
 
-        # TODO prettify scaling data
-        xys = training_set_inputs
-        ys = [y for x,y in xys]
-        min_y = min(ys)
-        max_y = max(ys)
-        training_set_inputs = [(x, ((y - min_y)/(max_y - min_y))) for x, y in xys]
+    train_set_inputs = read_file(train_filename)
+    test_set_inputs = read_file(test_filename)
+    train_set_inputs, test_set_inputs = scale_data(train_set_inputs, test_set_inputs)
 
-        if create_nn is not None:
-            # Calculate the number of inputs and outputs from the data.
-            n_inputs = get_n_inputs_outputs(training_set_inputs)
-            neural_network = initialize_network(create_nn, n_inputs, biases, activation_f, activation_f_derivative)
-        else:
-            layers, _ = read_network_layers_from_file(read_nn)
-            neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative)
+    if create_nn is not None:
+        # Calculate the number of inputs and outputs from the data.
+        n_inputs = get_n_inputs_outputs(train_set_inputs)
+        neural_network = initialize_network(create_nn, n_inputs, biases, activation_f, activation_f_derivative)
+    else:
+        layers, _ = read_network_layers_from_file(read_nn)
+        neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative)
 
-        # Train neural network.
-        neural_network.train(training_set_inputs, l_rate, number_of_epochs, visualize_every)
+    # Train neural network.
+    neural_network.train(train_set_inputs, l_rate, number_of_epochs, visualize_every)
 
-        if save_nn is not None:
-            write_network_to_file(save_nn, neural_network)
+    if save_nn is not None:
+        write_network_to_file(save_nn, neural_network)
 
-    if test_filename is not None:
-        testing_set_inputs = read_file(test_filename)
-        # TODO prettify scaling data here as well.
-        xys = testing_set_inputs
-        testing_set_inputs = [(x, ((y - min_y) / (max_y - min_y))) for x, y in xys]
+    if neural_network is None:
+        layers, _ = read_network_layers_from_file(read_nn)
+        neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative)
 
-        if neural_network is None:
-            layers, _ = read_network_layers_from_file(read_nn)
-            neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative)
+    # Test the neural network.
+    accuracy, predicted_outputs = neural_network.test(test_set_inputs)
 
-        # Test the neural network.
-        accuracy, predicted_outputs = neural_network.test(testing_set_inputs)
+    print_data(test_set_inputs, predicted_outputs)
 
-        print_data(testing_set_inputs, predicted_outputs)
-
-        if len(testing_set_inputs[0]) == 2 and (visualize_every is not None or savefig_filename is not None):
-            plot_data(testing_set_inputs, predicted_outputs, visualize_every, savefig_filename, training_set_inputs)
-        return accuracy
+    if len(test_set_inputs[0]) == 2 and (visualize_every is not None or savefig_filename is not None):
+        plot_data(test_set_inputs, predicted_outputs, visualize_every, savefig_filename, train_set_inputs)
+    return accuracy

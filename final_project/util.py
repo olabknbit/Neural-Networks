@@ -1,4 +1,9 @@
 PREFIX = 'final_project/data/'
+GEN = 'gen/'
+HELP = 'help/'
+PLOTS = 'plots/'
+TRAIN_TEST = 'train_test/'
+NN = 'nn/'
 DAY_LENGTH = 500
 
 
@@ -7,37 +12,41 @@ def get_routes_filename(lines, stops):
 
 
 def get_trips_filename(lines, stops, trips, transfers):
-    return PREFIX + 'trips-' + str(lines) + '-lines-' + str(stops) + '-stops-' + str(trips) + '-M-' + str(transfers) + \
-           '-transfers.txt'
+    return PREFIX + GEN + HELP + 'trips-' + str(lines) + '-lines-' + str(stops) + '-stops-' + str(trips) + '-M-' + \
+           str(transfers) + '-transfers.txt'
 
 
-def str_buses(buses):
-    return '-'.join([str(bus) for bus in buses])
+def str_list(l):
+    return '-'.join([str(e) for e in l])
 
 
 def get_hours_filename(n, buses):
-    return PREFIX + 'hours-' + str(n) + '-' + str_buses(buses) + '.txt'
+    return PREFIX + GEN + HELP + 'hours-' + str(n) + '-' + str_list(buses) + '.txt'
 
 
-def get_mode_filename(lines, stops, trips, transfers, n, buses, mode='train', ext='txt'):
-    return PREFIX + mode + '_data-' + str(lines) + '-lines-' + str(stops) + '-stops-' + str(trips) + '-M-' + \
-           str(transfers) + '-transfers-' + str(n) + '-N-' + str_buses(buses) + '-buses.' + ext
+def get_mode_filename(lines, stops, trips, transfers, n, buses, mode='train', nn=None, ext='txt'):
+    if nn is not None:
+        nn = '-' + str_list(nn) + '-nn'
+    else:
+        nn = ''
+    return PREFIX + GEN + mode + str(lines) + '-lines-' + str(stops) + '-stops-' + str(trips) + \
+           '-M-' + str(transfers) + '-transfers-' + str(n) + '-N-' + str_list(buses) + '-buses' + nn + '.' + ext
 
 
 def get_train_data_filename(lines, stops, trips, transfers, n, buses):
-    return get_mode_filename(lines, stops, trips, transfers, n, buses, mode='train')
+    return get_mode_filename(lines, stops, trips, transfers, n, buses, mode=TRAIN_TEST + 'train_data-')
 
 
 def get_test_data_filename(lines, stops, trips, transfers, n, buses):
-    return get_mode_filename(lines, stops, trips, transfers, n, buses, mode='test')
+    return get_mode_filename(lines, stops, trips, transfers, n, buses, mode=TRAIN_TEST + 'test_data-')
 
 
-def get_savefig_filename(lines, stops, trips, transfers, n, buses):
-    return get_mode_filename(lines, stops, trips, transfers, n, buses, mode='savefig', ext='png')
+def get_savefig_filename(lines, stops, trips, transfers, n, buses, nn):
+    return get_mode_filename(lines, stops, trips, transfers, n, buses, mode=PLOTS + 'savefig', nn=nn, ext='png')
 
 
-def get_save_nn_filename(lines, stops, trips, transfers, n, buses):
-    return get_mode_filename(lines, stops, trips, transfers, n, buses, mode='nn')
+def get_save_nn_filename(lines, stops, trips, transfers, n, buses, nn):
+    return get_mode_filename(lines, stops, trips, transfers, n, buses, mode=NN + 'nn', nn=nn)
 
 
 def get_routes_parsed_info(routes_filename):
