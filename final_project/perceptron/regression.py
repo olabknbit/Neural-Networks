@@ -133,7 +133,8 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
         neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative)
 
     # Train neural network.
-    neural_network.train(train_set_inputs, l_rate, number_of_epochs, visualize_every)
+    from train import train
+    train(neural_network, train_set_inputs, l_rate, number_of_epochs, visualize_every)
 
     if save_nn is not None:
         write_network_to_file(save_nn, neural_network)
