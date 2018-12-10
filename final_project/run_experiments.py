@@ -64,7 +64,7 @@ def main():
     for trips_m in [1000]:  # how many passenger's trips there are
         train_data_filename, test_data_filename = generate_data(routes_lines, routes_stops, hours_n, hours_buses,
                                                                 trips_m, trips_transfers, should_generate)
-        for nn in [[40]]:
+        for nn in [[7]]:
             savefig_filename, save_nn_filename = get_nn_filenames(routes_lines, routes_stops,
                                                                   hours_n, hours_buses, trips_m,
                                                                   trips_transfers, nn)

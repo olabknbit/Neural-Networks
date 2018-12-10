@@ -8,8 +8,12 @@ def activate(weights, inputs):
 
 
 class NeuronLayer:
-    def __init__(self, neurons):
+    def __init__(self, neurons, biases=True):
+        '''
+        :param neurons: list, of which element is a dict with 'weights' : list, 'delta' : float, 'output' : float
+        '''
         self.neurons = neurons
+        self.biases = biases
 
     def __len__(self):
         return len(self.neurons[0]['weights'])
@@ -46,12 +50,20 @@ class NeuronLayer:
             activation = activate(neuron['weights'], inputs)
             neuron['output'] = linear(activation)
             outputs.append(neuron['output'])
-
         return outputs
+
+    def get_neurons(self):
+        biases = -1 if self.biases else 0
+        return len(self) + biases
 
 
 class NeuralNetwork():
     def __init__(self, layers, activation_f, activation_f_derivative):
+        '''
+        :param layers: list of NeuronLayers
+        :param activation_f: lambda taking x : float and returning another float
+        :param activation_f_derivative: lambda derivative of activation_f, taking x : float and returning another float
+        '''
         self.layers = layers
         self.activation_f = lambda x: activation_f(x)
         self.activation_f_derivative = lambda x: activation_f_derivative(x)
@@ -82,7 +94,7 @@ class NeuralNetwork():
         # Update other layers' 'delta' field, so we can later update wights based on value of this field.
         next_layer = layer
         for layer in reversed(self.layers[:-1]):
-            prev_layer = layer.backward_propagate(next_layer, self.activation_f_derivative)
+            next_layer = layer.backward_propagate(next_layer, self.activation_f_derivative)
 
     def update_weights(self, inputs, l_rate):
         layer = self.layers[0]
@@ -91,6 +103,12 @@ class NeuralNetwork():
         for layer in self.layers[1:]:
             inputs = [neuron['output'] for neuron in previous_layer]
             previous_layer = layer.update_weights(inputs, l_rate)
+
+    def get_params(self):
+        '''
+        :return: list of number of neurons in each deep layer
+        '''
+        return [layer.get_neurons() for layer in self.layers[1:]]
 
     def get_weights(self):
         return [str(layer.neurons) for layer in self.layers]
@@ -106,3 +124,29 @@ class NeuralNetwork():
             predicted_outputs.append(predicted_output)
             error += abs(predicted_output - correct_output)
         return error / len(X_test), predicted_outputs
+
+
+def train(network, X_train, y_train, n_iter, l_rate=0.001, visualize_every=None):
+    import numpy as np
+    last_error = - np.infty
+    for epoch in range(n_iter):
+        iter_error = 0.0
+        for row, expected in zip(X_train, y_train):
+            # The net should only predict the class based on the features,
+            # so the last cell which represents the class is not passed forward.
+            output = network.forward_propagate(row)[0]
+
+            iter_error += np.sqrt((expected - output) ** 2)
+            network.backward_propagate(expected)
+            network.update_weights(row, l_rate)
+        if visualize_every is not None and epoch % visualize_every == 0:
+            import visualize
+            visualize.visualize_network(network, epoch)
+
+        if epoch % 100 == 0:
+            print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, iter_error))
+            # Stop training if iter_error not changing.
+            # TODO consider stochastic batches.
+            if abs(last_error - iter_error) < 0.001:
+                break
+            last_error = iter_error
