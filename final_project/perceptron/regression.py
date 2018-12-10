@@ -22,24 +22,22 @@ def read_file(filename):
         return rows
 
 
-# Return number of features - n_inputs for NN.
-def get_n_inputs_outputs(X_data):
-    return len(X_data[0])
-
-
-def plot_data(X_train, y_train, X_test, y_test, predicted_outputs, visualize, savefig_filename):
+def plot_data(X_train, y_train, X_test, y_test, y_predicted, y_sklearn_predicted=None, savefig_filename=None):
+    if len(X_train[0]) != 1:
+        print('Cannot plot because len(data) = %d > 1' % len(X_train[0]))
+        return
     import matplotlib.pyplot as plt
     marker = '.'
     plt.clf()
 
     plt.plot(X_test, y_test, marker, c='red', label='test_data')
-    plt.plot(X_test, predicted_outputs, marker, c='blue', label='predicted')
+    plt.plot(X_test, y_predicted, marker, c='blue', label='predicted')
     plt.plot(X_train, y_train, marker, c='green', label='training_data')
+    if y_sklearn_predicted is not None:
+        plt.plot(X_test, y_sklearn_predicted, marker, c='purple', label='sklearn_predicted')
 
     plt.legend()
-    if visualize:
-        plt.show()
-    if savefig_filename:
+    if savefig_filename is not None:
         plt.savefig(savefig_filename)
 
 
@@ -83,16 +81,14 @@ def initialize_network(neurons, n_inputs, biases, activation_f, activation_f_der
     return NeuralNetwork(layers, activation_f, activation_f_derivative)
 
 
-# TODO fix scale data
-def scale_data(train_set_inputs, test_set_inputs):
-    y_train = [y for x, y in train_set_inputs]
-    y_test = [y for x, y in test_set_inputs]
+def scale_data(y_train, y_test):
     min_y = min(y_train + y_test)
     max_y = max(y_train + y_test)
-    train_set_inputs = [(x, (y - min_y) / (max_y - min_y)) for x, y in train_set_inputs]
-    test_set_inputs = [(x, (y - min_y) / (max_y - min_y)) for x, y in test_set_inputs]
 
-    return train_set_inputs, test_set_inputs
+    y_train = [(y - min_y) / (max_y - min_y) for y in y_train]
+    y_test = [(y - min_y) / (max_y - min_y) for y in y_test]
+
+    return y_train, y_test
 
 
 def split_data(data_set):
@@ -104,45 +100,65 @@ def split_data(data_set):
     return X_set, y_set
 
 
+def get_nn(create_nn, read_nn, biases, activation_f, activation_f_derivative, X_train):
+    from util import read_network_layers_from_file
+    neural_network = None
+    if create_nn is not None:
+        # Calculate the number of inputs and outputs from the data.
+        n_inputs = len(X_train[0])
+        neural_network = initialize_network(create_nn, n_inputs, biases, activation_f, activation_f_derivative)
+    elif read_nn is not None:
+        layers, _ = read_network_layers_from_file(read_nn)
+        neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative)
+    else:
+        print('Cannot create nor read nn. Exiting')
+        exit(1)
+
+    return neural_network
+
+
+def sklearn_test(nn, X_train, y_train, X_test, y_test):
+    from sklearn.neural_network import MLPRegressor
+    lr = MLPRegressor(hidden_layer_sizes=nn, activation='tanh').fit(X_train, y_train)
+    return lr.predict(X_test)
+
+
 def get_split_dataset(train_filename, test_filename):
     train_set_inputs, test_set_inputs = read_file(train_filename), read_file(test_filename)
-    train_set_inputs, test_set_inputs = scale_data(train_set_inputs, test_set_inputs)
     X_train, y_train = split_data(train_set_inputs)
     X_test, y_test = split_data(test_set_inputs)
+    y_train, y_test = scale_data(y_train, y_test)
     return X_train, y_train, X_test, y_test
 
 
 def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_epochs, visualize_every, l_rate, biases,
-         savefig_filename, activation_f, activation_f_derivative):
-    from util import read_network_layers_from_file, write_network_to_file
+         savefig_filename, activation_f, activation_f_derivative, compare_to_sklearn=False):
     if train_filename is None or test_filename is None:
         print('Both train and test filename has to be provided for scaling')
         exit(1)
 
     X_train, y_train, X_test, y_test = get_split_dataset(train_filename, test_filename)
-
-    if create_nn is not None:
-        # Calculate the number of inputs and outputs from the data.
-        n_inputs = get_n_inputs_outputs(X_train)
-        neural_network = initialize_network(create_nn, n_inputs, biases, activation_f, activation_f_derivative)
-    else:
-        layers, _ = read_network_layers_from_file(read_nn)
-        neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative)
+    neural_network = get_nn(create_nn, read_nn, biases, activation_f, activation_f_derivative, X_train)
 
     # Train neural network.
     from train import train
     train(neural_network, X_train, y_train, l_rate, number_of_epochs, visualize_every)
 
     if save_nn is not None:
+        from util import write_network_to_file
         write_network_to_file(save_nn, neural_network)
 
-    if neural_network is None:
-        layers, _ = read_network_layers_from_file(read_nn)
-        neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative)
-
     # Test the neural network.
-    accuracy, predicted_outputs = neural_network.test(X_test, y_test)
+    avg_error, y_predicted = neural_network.test(X_test, y_test)
+    print('NN accuracy and errors')
+    print_data(y_test, y_predicted)
 
-    if len(X_train[0]) == 1 and (visualize_every is not None or savefig_filename is not None):
-        plot_data(X_train, y_train, X_test, y_test, predicted_outputs, visualize_every, savefig_filename)
-    return accuracy
+    y_sklearn_predicted = None
+    if compare_to_sklearn:
+        y_sklearn_predicted = sklearn_test(create_nn, X_train, y_train, X_test, y_test)
+        print('\nsklearn accuracy and errors')
+        print_data(y_test, y_sklearn_predicted)
+
+    if savefig_filename is not None:
+        plot_data(X_train, y_train, X_test, y_test, y_predicted, y_sklearn_predicted, savefig_filename)
+    return avg_error

@@ -27,10 +27,10 @@ class NeuronLayer:
     def backward_propagate(self, next_layer, activation_f_derivative):
         for i, neuron_i in enumerate(self.neurons):
             error = 0.0
-            for neuron_j in next_layer:
+            for neuron_j in next_layer.neurons:
                 error += (neuron_j['weights'][i] * neuron_j['delta'])
             neuron_i['delta'] = error * activation_f_derivative(neuron_i['output'])
-        return self.neurons
+        return self
 
     def update_weights(self, inputs, l_rate):
         for neuron in self.neurons:
@@ -73,15 +73,16 @@ class NeuralNetwork():
         # Update last layer's (output layer's) 'delta' field.
         # This field is needed to calculate 'delta' fields in previous (closer to input layer) layers,
         # so then we can update the weights.
-        layer = self.layers[-1].neurons
-        neuron = layer[0]
+        layer = self.layers[-1]
+        neurons = layer.neurons
+        neuron = neurons[0]
         error = (expected_val - neuron['output'])
         neuron['delta'] = error * self.activation_f_derivative(neuron['output'])
 
         # Update other layers' 'delta' field, so we can later update wights based on value of this field.
         next_layer = layer
         for layer in reversed(self.layers[:-1]):
-            next_layer = layer.backward_propagate(next_layer, self.activation_f_derivative)
+            prev_layer = layer.backward_propagate(next_layer, self.activation_f_derivative)
 
     def update_weights(self, inputs, l_rate):
         layer = self.layers[0]

@@ -42,11 +42,11 @@ def get_test_data_filename(lines, stops, trips, transfers, n, buses):
 
 
 def get_savefig_filename(lines, stops, trips, transfers, n, buses, nn):
-    return get_mode_filename(lines, stops, trips, transfers, n, buses, mode=PLOTS + 'savefig', nn=nn, ext='png')
+    return get_mode_filename(lines, stops, trips, transfers, n, buses, mode=PLOTS + 'savefig-', nn=nn, ext='png')
 
 
 def get_save_nn_filename(lines, stops, trips, transfers, n, buses, nn):
-    return get_mode_filename(lines, stops, trips, transfers, n, buses, mode=NN + 'nn', nn=nn)
+    return get_mode_filename(lines, stops, trips, transfers, n, buses, mode=NN + 'nn-', nn=nn)
 
 
 def get_routes_parsed_info(routes_filename):
