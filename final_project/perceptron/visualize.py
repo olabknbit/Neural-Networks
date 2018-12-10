@@ -11,7 +11,7 @@ def visualize(layers, epoch):
     i = 0
     next = []
 
-    for o in layers[0][0]['weights']:
+    for _ in layers[0][0]['weights']:
         f.node(str(i))
         next.append(str(i))
         i += 1
@@ -82,5 +82,9 @@ def visualize2(layers):
     plt.show()
 
 
-def main(layers, epoch):
-    visualize(layers, epoch)
+def main(network, n_epoch):
+    from util import read_network_layers_from_file, write_network_to_file
+    tmp_filename = "tmp/temp"
+    write_network_to_file(tmp_filename, network)
+    layers, _ = read_network_layers_from_file(tmp_filename)
+    visualize(layers, str(n_epoch))

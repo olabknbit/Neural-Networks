@@ -23,25 +23,18 @@ def read_file(filename):
 
 
 # Return number of features - n_inputs for NN.
-def get_n_inputs_outputs(data):
-    n_inputs = len(data[0]) - 1
-    return n_inputs
+def get_n_inputs_outputs(X_data):
+    return len(X_data[0])
 
 
-def plot_data(test_data, predicted_outputs, visualize, savefig_filename, training_data=None):
+def plot_data(X_train, y_train, X_test, y_test, predicted_outputs, visualize, savefig_filename):
     import matplotlib.pyplot as plt
     marker = '.'
     plt.clf()
 
-    test_data_x = [t[0] for t in test_data]
-    test_data_y = [t[1] for t in test_data]
-    plt.plot(test_data_x, test_data_y, marker, c='red', label='test_data')
-    plt.plot(test_data_x, predicted_outputs, marker, c='blue', label='predicted')
-
-    if training_data is not None:
-        training_data_x = [t[0] for t in training_data]
-        training_data_y = [t[1] for t in training_data]
-        plt.plot(training_data_x, training_data_y, marker, c='green', label='training_data')
+    plt.plot(X_test, y_test, marker, c='red', label='test_data')
+    plt.plot(X_test, predicted_outputs, marker, c='blue', label='predicted')
+    plt.plot(X_train, y_train, marker, c='green', label='training_data')
 
     plt.legend()
     if visualize:
@@ -50,21 +43,21 @@ def plot_data(test_data, predicted_outputs, visualize, savefig_filename, trainin
         plt.savefig(savefig_filename)
 
 
-def print_data(data, predicted_outputs):
+def print_data(y_test, predicted_outputs):
     Error = 0.0
     SE = 0.0
     RAEDivider = 0.0
     RRAEDivider = 0.0
     AvgData = sum(predicted_outputs) / len(predicted_outputs)
 
-    for i, row in enumerate(data):
-        Error += abs(predicted_outputs[i] - row[1])
-        SE += (predicted_outputs[i] - row[1]) ** 2
-        RAEDivider += abs(AvgData - row[1])
-        RRAEDivider += (AvgData - row[1]) ** 2
+    for y, pred in zip(y_test, predicted_outputs):
+        Error += abs(pred - y)
+        SE += (pred - y) ** 2
+        RAEDivider += abs(AvgData - y)
+        RRAEDivider += (AvgData - y) ** 2
 
-    AvgError = 1.0 * Error / (1.0 * len(data))
-    MSE = 1.0 * SE / (1.0 * len(data))
+    AvgError = 1.0 * Error / (1.0 * len(y_test))
+    MSE = 1.0 * SE / (1.0 * len(y_test))
     RMSE = MSE ** 0.5
     RAE = Error / RAEDivider
     RRAE = SE / RRAEDivider
@@ -75,18 +68,6 @@ def print_data(data, predicted_outputs):
     print('RMSE = %.3f' % RMSE)
     print('RAE = %.3f' % RAE)
     print('RRAE = %.3f' % RRAE)
-
-    err = 0.0
-    for i, pred in enumerate(predicted_outputs):
-        min = float('inf')
-
-        for j, row in enumerate(data):
-            if min > ((row[1] - pred) ** 2 + (row[0] - data[i][0]) ** 2) ** 0.5:
-                min = ((row[1] - pred) ** 2 + (row[0] - data[i][0]) ** 2) ** 0.5
-        err += min
-
-    print('Sum of distances = %.3f' % err)
-    print('Avg distance = %.3f' % (err / len(data)))
 
 
 def initialize_network(neurons, n_inputs, biases, activation_f, activation_f_derivative):
@@ -102,6 +83,7 @@ def initialize_network(neurons, n_inputs, biases, activation_f, activation_f_der
     return NeuralNetwork(layers, activation_f, activation_f_derivative)
 
 
+# TODO fix scale data
 def scale_data(train_set_inputs, test_set_inputs):
     y_train = [y for x, y in train_set_inputs]
     y_test = [y for x, y in test_set_inputs]
@@ -113,6 +95,23 @@ def scale_data(train_set_inputs, test_set_inputs):
     return train_set_inputs, test_set_inputs
 
 
+def split_data(data_set):
+    X_set = []
+    y_set = []
+    for row in data_set:
+        X_set.append(row[:-1])
+        y_set.append(row[-1])
+    return X_set, y_set
+
+
+def get_split_dataset(train_filename, test_filename):
+    train_set_inputs, test_set_inputs = read_file(train_filename), read_file(test_filename)
+    train_set_inputs, test_set_inputs = scale_data(train_set_inputs, test_set_inputs)
+    X_train, y_train = split_data(train_set_inputs)
+    X_test, y_test = split_data(test_set_inputs)
+    return X_train, y_train, X_test, y_test
+
+
 def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_epochs, visualize_every, l_rate, biases,
          savefig_filename, activation_f, activation_f_derivative):
     from util import read_network_layers_from_file, write_network_to_file
@@ -120,13 +119,11 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
         print('Both train and test filename has to be provided for scaling')
         exit(1)
 
-    train_set_inputs = read_file(train_filename)
-    test_set_inputs = read_file(test_filename)
-    train_set_inputs, test_set_inputs = scale_data(train_set_inputs, test_set_inputs)
+    X_train, y_train, X_test, y_test = get_split_dataset(train_filename, test_filename)
 
     if create_nn is not None:
         # Calculate the number of inputs and outputs from the data.
-        n_inputs = get_n_inputs_outputs(train_set_inputs)
+        n_inputs = get_n_inputs_outputs(X_train)
         neural_network = initialize_network(create_nn, n_inputs, biases, activation_f, activation_f_derivative)
     else:
         layers, _ = read_network_layers_from_file(read_nn)
@@ -134,7 +131,7 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
 
     # Train neural network.
     from train import train
-    train(neural_network, train_set_inputs, l_rate, number_of_epochs, visualize_every)
+    train(neural_network, X_train, y_train, l_rate, number_of_epochs, visualize_every)
 
     if save_nn is not None:
         write_network_to_file(save_nn, neural_network)
@@ -144,10 +141,8 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
         neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative)
 
     # Test the neural network.
-    accuracy, predicted_outputs = neural_network.test(test_set_inputs)
+    accuracy, predicted_outputs = neural_network.test(X_test, y_test)
 
-    print_data(test_set_inputs, predicted_outputs)
-
-    if len(test_set_inputs[0]) == 2 and (visualize_every is not None or savefig_filename is not None):
-        plot_data(test_set_inputs, predicted_outputs, visualize_every, savefig_filename, train_set_inputs)
+    if len(X_train[0]) == 1 and (visualize_every is not None or savefig_filename is not None):
+        plot_data(X_train, y_train, X_test, y_test, predicted_outputs, visualize_every, savefig_filename)
     return accuracy

@@ -10,13 +10,15 @@ def move_data(filename, d):
     return new_f
 
 
-def generate_data(routes_lines, routes_stops, hours_n, hours_buses, trips_m, trips_transfers):
+def generate_data(routes_lines, routes_stops, hours_n, hours_buses, trips_m, trips_transfers, should_generate):
     import generate_hours, generate_trips, generate_train_test_data
     import util
-    generate_hours.generate_hours(hours_buses, hours_n)
-    generate_trips.generate_trips(routes_lines, routes_stops, trips_m, trips_transfers)
-    generate_train_test_data.generate_test_train_data_without_filenames(routes_lines, routes_stops, trips_m,
-                                                                        trips_transfers, hours_n, hours_buses)
+
+    if should_generate:
+        generate_hours.generate_hours(hours_buses, hours_n)
+        generate_trips.generate_trips(routes_lines, routes_stops, trips_m, trips_transfers)
+        generate_train_test_data.generate_test_train_data_without_filenames(routes_lines, routes_stops, trips_m,
+                                                                            trips_transfers, hours_n, hours_buses)
 
     train_data_filename = util.get_train_data_filename(routes_lines, routes_stops, trips_m, trips_transfers, hours_n,
                                                        hours_buses)
@@ -40,7 +42,16 @@ def get_nn_filenames(routes_lines, routes_stops, hours_n, hours_buses, trips_m, 
 
 
 def main():
-    number_of_epochs = 1500
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Neural Network framework.')
+    parser.add_argument('--generate',
+                        help='If specified new datafiles will be generated. Otherwise using existing files')
+
+    args = parser.parse_args()
+    should_generate = args.generate is not None
+
+    number_of_epochs = 10000
     routes_lines = 1
     routes_stops = 6
     hours_n = 1000  # how many rows of train and test data to generate (split 60:40)
@@ -48,7 +59,7 @@ def main():
     trips_transfers = 0  # max how many transfers each passenger can have
     for trips_m in [1000]:  # how many passenger's trips there are
         train_data_filename, test_data_filename = generate_data(routes_lines, routes_stops, hours_n, hours_buses,
-                                                                trips_m, trips_transfers)
+                                                                trips_m, trips_transfers, should_generate)
         for nn in [[40], [60], [80]]:
             savefig_filename, save_nn_filename = get_nn_filenames(routes_lines, routes_stops,
                                                                   hours_n, hours_buses, trips_m,

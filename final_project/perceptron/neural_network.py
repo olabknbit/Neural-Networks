@@ -1,3 +1,12 @@
+# Activation function - for weights and inputs returns their dot product.
+def activate(weights, inputs):
+    # Add bias.
+    activation = weights[-1]
+    for weight, input in zip(weights[:-1], inputs):
+        activation += weight * input
+    return activation
+
+
 class NeuronLayer:
     def __init__(self, neurons):
         self.neurons = neurons
@@ -7,7 +16,6 @@ class NeuronLayer:
 
     # Calculate what are the outputs of the layer for the given inputs.
     def forward_propagate(self, inputs, activation_f):
-        from util import activate
         outputs = []
         for neuron in self.neurons:
             activation = activate(neuron['weights'], inputs)
@@ -75,11 +83,8 @@ class NeuralNetwork():
         for layer in reversed(self.layers[:-1]):
             next_layer = layer.backward_propagate(next_layer, self.activation_f_derivative)
 
-    def update_weights(self, row, l_rate):
+    def update_weights(self, inputs, l_rate):
         layer = self.layers[0]
-
-        # Crop last cell which is the class that data element/row belongs to.
-        inputs = row[:-1]
         previous_layer = layer.update_weights(inputs, l_rate)
 
         for layer in self.layers[1:]:
@@ -90,14 +95,13 @@ class NeuralNetwork():
         return [str(layer.neurons) for layer in self.layers]
 
     def predict(self, row):
-        return self.forward_propagate(row[:-1])
+        return self.forward_propagate(row)
 
-    def test(self, test_data):
+    def test(self, X_test, y_test):
         predicted_outputs = []
         error = 0.0
-        for row in test_data:
+        for row, correct_output in zip(X_test, y_test):
             predicted_output = self.predict(row)[0]
-            correct_output = row[-1]
             predicted_outputs.append(predicted_output)
             error += abs(predicted_output - correct_output)
-        return error / len(test_data), predicted_outputs
+        return error / len(X_test), predicted_outputs
