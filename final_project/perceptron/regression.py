@@ -71,14 +71,13 @@ class NeuralNetwork():
 
     # Calculate 'delta' for every neuron. This will then be used to update the weights of the neurons.
     def backward_propagate(self, expected_val):
-        from util import linear_derivative
         # Update last layer's (output layer's) 'delta' field.
         # This field is needed to calculate 'delta' fields in previous (closer to input layer) layers,
         # so then we can update the weights.
         layer = self.layers[-1].neurons
         neuron = layer[0]
         error = (expected_val - neuron['output'])
-        neuron['delta'] = error * linear_derivative(neuron['output'])
+        neuron['delta'] = error * self.activation_f_derivative(neuron['output'])
 
         # Update other layers' 'delta' field, so we can later update wights based on value of this field.
         next_layer = layer
@@ -97,15 +96,16 @@ class NeuralNetwork():
             previous_layer = layer.update_weights(inputs, l_rate)
 
     def train(self, data_input, l_rate, n_iter, visualize_every):
+        last_error = - np.infty
         for epoch in range(n_iter):
             iter_error = 0.0
             for row in data_input:
                 # The net should only predict the class based on the features,
                 # so the last cell which represents the class is not passed forward.
-                outputs = self.forward_propagate(row[:-1])
+                output = self.forward_propagate(row[:-1])[0]
 
                 expected = row[-1]
-                iter_error += np.sqrt(expected ** 2)
+                iter_error += np.sqrt((expected - output) ** 2)
                 self.backward_propagate(expected)
                 self.update_weights(row, l_rate)
             if visualize_every is not None and epoch % visualize_every == 0:
@@ -115,8 +115,14 @@ class NeuralNetwork():
                 write_network_to_file(tmp_filename, self)
                 layers, _ = read_network_layers_from_file(tmp_filename)
                 visualize.main(layers, str(epoch))
+
             if epoch % 100 == 0:
                 print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, iter_error))
+                # Stop training if iter_error not changing.
+                # TODO consider stochastic batches.
+                if abs(last_error - iter_error) < 0.001:
+                    break
+                last_error = iter_error
 
     def get_weights(self):
         return [str(layer.neurons) for layer in self.layers]
@@ -159,6 +165,7 @@ def get_n_inputs_outputs(data):
 def plot_data(test_data, predicted_outputs, visualize, savefig_filename, training_data=None):
     import matplotlib.pyplot as plt
     marker = '.'
+    plt.clf()
 
     test_data_x = [t[0] for t in test_data]
     test_data_y = [t[1] for t in test_data]
@@ -229,40 +236,51 @@ def initialize_network(neurons, n_inputs, biases, activation_f, activation_f_der
     return NeuralNetwork(layers, activation_f, activation_f_derivative)
 
 
+def scale_data(train_set_inputs, test_set_inputs):
+    y_train = [y for x, y in train_set_inputs]
+    y_test = [y for x, y in test_set_inputs]
+    min_y = min(y_train + y_test)
+    max_y = max(y_train + y_test)
+    train_set_inputs = [(x, (y - min_y) / (max_y - min_y)) for x,y in train_set_inputs]
+    test_set_inputs = [(x,(y - min_y) / (max_y - min_y)) for x,y in test_set_inputs]
+
+    return train_set_inputs, test_set_inputs
+
+
 def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_epochs, visualize_every, l_rate, biases,
          savefig_filename, activation_f, activation_f_derivative):
     from util import read_network_layers_from_file, write_network_to_file
-    neural_network = None
-    training_set_inputs = None
-    if train_filename is not None:
-        training_set_inputs = read_file(train_filename)
+    if train_filename is None or test_filename is None:
+        print('Both train and test filename has to be provided for scaling')
+        exit(1)
 
-        if create_nn is not None:
-            # Calculate the number of inputs and outputs from the data.
-            n_inputs = get_n_inputs_outputs(training_set_inputs)
-            neural_network = initialize_network(create_nn, n_inputs, biases, activation_f, activation_f_derivative)
-        else:
-            layers, _ = read_network_layers_from_file(read_nn)
-            neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative)
+    train_set_inputs = read_file(train_filename)
+    test_set_inputs = read_file(test_filename)
+    train_set_inputs, test_set_inputs = scale_data(train_set_inputs, test_set_inputs)
 
-        # Train neural network.
-        neural_network.train(training_set_inputs, l_rate, number_of_epochs, visualize_every)
+    if create_nn is not None:
+        # Calculate the number of inputs and outputs from the data.
+        n_inputs = get_n_inputs_outputs(train_set_inputs)
+        neural_network = initialize_network(create_nn, n_inputs, biases, activation_f, activation_f_derivative)
+    else:
+        layers, _ = read_network_layers_from_file(read_nn)
+        neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative)
 
-        if save_nn is not None:
-            write_network_to_file(save_nn, neural_network)
+    # Train neural network.
+    neural_network.train(train_set_inputs, l_rate, number_of_epochs, visualize_every)
 
-    if test_filename is not None:
-        testing_set_inputs = read_file(test_filename)
+    if save_nn is not None:
+        write_network_to_file(save_nn, neural_network)
 
-        if neural_network is None:
-            layers, _ = read_network_layers_from_file(read_nn)
-            neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative)
+    if neural_network is None:
+        layers, _ = read_network_layers_from_file(read_nn)
+        neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative)
 
-        # Test the neural network.
-        accuracy, predicted_outputs = neural_network.test(testing_set_inputs)
+    # Test the neural network.
+    accuracy, predicted_outputs = neural_network.test(test_set_inputs)
 
-        print_data(testing_set_inputs, predicted_outputs)
+    print_data(test_set_inputs, predicted_outputs)
 
-        if len(testing_set_inputs[0]) == 2 and (visualize_every is not None or savefig_filename is not None):
-            plot_data(testing_set_inputs, predicted_outputs, visualize_every, savefig_filename, training_set_inputs)
-        return accuracy
+    if len(test_set_inputs[0]) == 2 and (visualize_every is not None or savefig_filename is not None):
+        plot_data(test_set_inputs, predicted_outputs, visualize_every, savefig_filename, train_set_inputs)
+    return accuracy

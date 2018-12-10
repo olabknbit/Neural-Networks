@@ -28,21 +28,24 @@ def reLu_derivative(output):
 
 
 def tanh(x):
-    return np.tanh(x)
+    return np.tanh(x) + 1
 
 
 def tanh_derivative(x):
-    return 1.0 - np.tanh(x)**2
+    return 1.0 - np.tanh(x) ** 2
 
 
 # Sigmoid transfer function
-def sigmoid(activation):
-    return 1.0 / (1.0 + exp(-activation))
+def sigmoid(x):
+    if -x > np.log(np.finfo(type(x)).max):
+        return 0.0
+    a = np.exp(-x)
+    return 1.0 / (1.0 + a)
 
 
 # Derivative of transfer function
-def sigmoid_derivative(output):
-    return output * (1.0 - output)
+def sigmoid_derivative(x):
+    return exp(-x) / (exp(-x) + 1) ** 2
 
 
 def write_network_to_file(filename, neural_network):

@@ -103,7 +103,7 @@ def run_simulator(routes_filename, trips_filename, hours_filename):
 
 
 def run_simulator_with_args(routes_lines, routes_stops, trips_m, trips_transfers, hours_n, hours_buses):
-    import util
+    from final_project.data.gen import util
     routes_filename = util.get_routes_filename(routes_lines, routes_stops)
     trips_filename = util.get_trips_filename(routes_lines, routes_stops, trips_m, trips_transfers)
     hours_filename = util.get_hours_filename(hours_n, hours_buses)
