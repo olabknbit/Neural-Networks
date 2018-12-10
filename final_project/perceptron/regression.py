@@ -89,8 +89,8 @@ def scale_data(train_set_inputs, test_set_inputs):
     y_test = [y for x, y in test_set_inputs]
     min_y = min(y_train + y_test)
     max_y = max(y_train + y_test)
-    train_set_inputs = [(x, (y - min_y) / (max_y - min_y)) for x,y in train_set_inputs]
-    test_set_inputs = [(x,(y - min_y) / (max_y - min_y)) for x,y in test_set_inputs]
+    train_set_inputs = [(x, (y - min_y) / (max_y - min_y)) for x, y in train_set_inputs]
+    test_set_inputs = [(x, (y - min_y) / (max_y - min_y)) for x, y in test_set_inputs]
 
     return train_set_inputs, test_set_inputs
 

@@ -20,7 +20,7 @@ def main():
                         help='When creating a nn from scratch; number of neurons for each layer',
                         required=False)
 
-    parser.add_argument('--save_nn',  type=str, help='Name of a file to save trained model to.')
+    parser.add_argument('--save_nn', type=str, help='Name of a file to save trained model to.')
     parser.add_argument('--savefig_filename', type=str, help='Name of a file to save plot to.')
 
     parser.add_argument('-e', '--number_of_epochs', type=int, help='Number of epochs (iterations) for the NN to run',
