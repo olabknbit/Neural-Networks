@@ -13,7 +13,7 @@ def train(network, X_train, y_train, l_rate, n_iter, visualize_every):
             network.update_weights(row, l_rate)
         if visualize_every is not None and epoch % visualize_every == 0:
             import visualize
-            visualize.main(network, epoch)
+            visualize.visualize_network(network, epoch)
 
         if epoch % 100 == 0:
             print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, iter_error))

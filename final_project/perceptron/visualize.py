@@ -82,9 +82,26 @@ def visualize2(layers):
     plt.show()
 
 
-def main(network, n_epoch):
+def visualize_network(network, n_epoch):
     from util import read_network_layers_from_file, write_network_to_file
     tmp_filename = "tmp/temp"
     write_network_to_file(tmp_filename, network)
     layers, _ = read_network_layers_from_file(tmp_filename)
     visualize(layers, str(n_epoch))
+
+
+def main():
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Neural Network framework.')
+    parser.add_argument('--file', type=str, help='Name of a file containing graph')
+
+    args = parser.parse_args()
+    from util import read_network_layers_from_file
+    layers, _ = read_network_layers_from_file(args.file)
+
+    visualize(layers, args.file)
+
+
+if __name__ == "__main__":
+    main()
