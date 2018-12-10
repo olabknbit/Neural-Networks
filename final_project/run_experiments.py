@@ -41,31 +41,30 @@ def get_nn_filenames(routes_lines, routes_stops, hours_n, hours_buses, trips_m, 
 
 def main():
     number_of_epochs = 1500
-    for routes_lines in [1]:
-        for routes_stops in [6]:
-            for hours_n in [1000]:  # how many rows of train and test data to generate (split 60:40)
-                for hours_buses in [[1]]:  # how many buses of each line should run
-                    for trips_m in [1000]:  # how many passenger's trips there are
-                        for trips_transfers in [0]:  # max how many transfers each passenger can have
-                            train_data_filename, test_data_filename = generate_data(
-                                routes_lines, routes_stops, hours_n, hours_buses, trips_m, trips_transfers)
-                            # [5], [10], [20],
-                            for nn in [[40], [60], [80]]:
-                                savefig_filename, save_nn_filename = get_nn_filenames(routes_lines, routes_stops,
-                                                                                      hours_n, hours_buses, trips_m,
-                                                                                      trips_transfers, nn)
-                                from perceptron.util import tanh, tanh_derivative
-                                activation_f, activation_f_derivative = tanh, tanh_derivative
-                                from perceptron import regression
-                                accuracy = regression.main(train_data_filename, test_data_filename,
-                                                           activation_f=activation_f,
-                                                           activation_f_derivative=activation_f_derivative,
-                                                           visualize_every=None,
-                                                           create_nn=nn, save_nn=save_nn_filename,
-                                                           read_nn=None, number_of_epochs=number_of_epochs,
-                                                           l_rate=0.001, biases=True, savefig_filename=savefig_filename)
-                                print(nn, 'accuracy', accuracy)
-                                print('_________________________________________')
+    routes_lines = 1
+    routes_stops = 6
+    hours_n = 1000  # how many rows of train and test data to generate (split 60:40)
+    hours_buses = [1]  # how many buses of each line should run
+    trips_transfers = 0  # max how many transfers each passenger can have
+    for trips_m in [1000]:  # how many passenger's trips there are
+        train_data_filename, test_data_filename = generate_data(routes_lines, routes_stops, hours_n, hours_buses,
+                                                                trips_m, trips_transfers)
+        for nn in [[40], [60], [80]]:
+            savefig_filename, save_nn_filename = get_nn_filenames(routes_lines, routes_stops,
+                                                                  hours_n, hours_buses, trips_m,
+                                                                  trips_transfers, nn)
+            from perceptron.util import tanh, tanh_derivative
+            activation_f, activation_f_derivative = tanh, tanh_derivative
+            from perceptron import regression
+            accuracy = regression.main(train_data_filename, test_data_filename,
+                                       activation_f=activation_f,
+                                       activation_f_derivative=activation_f_derivative,
+                                       visualize_every=None,
+                                       create_nn=nn, save_nn=save_nn_filename,
+                                       read_nn=None, number_of_epochs=number_of_epochs,
+                                       l_rate=0.001, biases=True, savefig_filename=savefig_filename)
+            print(nn, 'accuracy', accuracy)
+            print('_________________________________________')
 
 
 if __name__ == "__main__":
