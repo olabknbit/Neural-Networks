@@ -67,6 +67,7 @@ class NeuralNetwork():
         self.layers = layers
         self.activation_f = lambda x: activation_f(x)
         self.activation_f_derivative = lambda x: activation_f_derivative(x)
+        self.score = None
 
     # Pipe data row through the network and get final outputs.
     def forward_propagate(self, row):
@@ -123,30 +124,42 @@ class NeuralNetwork():
             predicted_output = self.predict(row)[0]
             predicted_outputs.append(predicted_output)
             error += abs(predicted_output - correct_output)
-        return error / len(X_test), predicted_outputs
+        self.score = error / len(X_test)
+        return self.score, predicted_outputs
+
+    def train(self, X_train, y_train, n_iter, l_rate=0.001, visualize_every=None):
+        import numpy as np
+        last_error = - np.infty
+        for epoch in range(n_iter):
+            iter_error = 0.0
+            for row, expected in zip(X_train, y_train):
+                # The net should only predict the class based on the features,
+                # so the last cell which represents the class is not passed forward.
+                output = self.forward_propagate(row)[0]
+
+                iter_error += np.sqrt((expected - output) ** 2)
+                self.backward_propagate(expected)
+                self.update_weights(row, l_rate)
+            if visualize_every is not None and epoch % visualize_every == 0:
+                import visualize
+                visualize.visualize_network(self, epoch)
+
+            if epoch % 100 == 0:
+                print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, iter_error))
+                # Stop training if iter_error not changing.
+                # TODO consider stochastic batches.
+                if abs(last_error - iter_error) < 0.001:
+                    break
+                last_error = iter_error
+
+                # TODO use moment
 
 
-def train(network, X_train, y_train, n_iter, l_rate=0.001, visualize_every=None):
-    import numpy as np
-    last_error = - np.infty
-    for epoch in range(n_iter):
-        iter_error = 0.0
-        for row, expected in zip(X_train, y_train):
-            # The net should only predict the class based on the features,
-            # so the last cell which represents the class is not passed forward.
-            output = network.forward_propagate(row)[0]
-
-            iter_error += np.sqrt((expected - output) ** 2)
-            network.backward_propagate(expected)
-            network.update_weights(row, l_rate)
-        if visualize_every is not None and epoch % visualize_every == 0:
-            import visualize
-            visualize.visualize_network(network, epoch)
-
-        if epoch % 100 == 0:
-            print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, iter_error))
-            # Stop training if iter_error not changing.
-            # TODO consider stochastic batches.
-            if abs(last_error - iter_error) < 0.001:
-                break
-            last_error = iter_error
+def score(network, X_train, y_train, X_test, y_test, n_iter, savefig_filename=None):
+    if network.score is None:
+        network.train(X_train, y_train, n_iter)
+        score, y_predicted = network.test(X_test, y_test)
+        if savefig_filename is not None:
+            from util import plot_regression_data
+            plot_regression_data(X_test, y_train, X_test, y_test, y_predicted, savefig_filename=savefig_filename)
+    return network.score

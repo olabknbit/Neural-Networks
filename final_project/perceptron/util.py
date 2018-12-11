@@ -68,11 +68,6 @@ def read_network_layers_from_file(filename):
         return layers, output_classes
 
 
-def read_network_from_file(filename, activation_f, activation_f_derivative):
-    from neural_network_regression import NeuronLayer, NeuralNetwork
-    layers, _ = read_network_layers_from_file(filename)
-    neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative)
-
 def get_random_neurons(n_inputs, n_neurons):
     from numpy import random
     # random numbers from range [0; 0.3) are proven to be best
@@ -91,6 +86,38 @@ def initialize_network(neurons, n_inputs, biases, activation_f, activation_f_der
     layers.append(NeuronLayer(get_random_neurons(n_in + bias, 1)))
 
     return NeuralNetwork(layers, activation_f, activation_f_derivative)
+
+
+def get_activation_f_and_f_d_by_name(activation_f_name):
+    if activation_f_name == 'tanh':
+        activation_f, activation_f_d = tanh, tanh_derivative
+    elif activation_f_name == 'sigmoid':
+        activation_f, activation_f_d = sigmoid, sigmoid_derivative
+    else:
+        print('Error: Do not have %s activation f implemented in util.py' % activation_f_name)
+        exit(1)
+    return activation_f, activation_f_d
+
+
+def read_network_from_file(filename, activation_f, activation_f_derivative):
+    from neural_network_regression import NeuronLayer, NeuralNetwork
+    layers, _ = read_network_layers_from_file(filename)
+    neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative)
+    return neural_network
+
+
+def read_network_from_file_f_name(filename, activation_f_name):
+    activation_f, activation_f_d = get_activation_f_and_f_d_by_name(activation_f_name)
+    return read_network_from_file(filename, activation_f, activation_f_d)
+
+
+def initialize_random_network(n_inputs, n_hidden_layers=(1, 5), n_neurons=(5, 100), activation='tanh', biases=True,
+                              random_state=1):
+    import random
+    activation_f, activation_f_d = get_activation_f_and_f_d_by_name(activation)
+    n_layers = random.randint(*n_hidden_layers)
+    neurons = [random.randint(*n_neurons) for _ in range(n_layers)]
+    return initialize_network(neurons, n_inputs, biases, activation_f, activation_f_d)
 
 
 def scale_data(y_train, y_test):
@@ -133,3 +160,23 @@ def get_split_dataset(train_filename, test_filename):
     X_test, y_test = split_data(test_set_inputs)
     y_train, y_test = scale_data(y_train, y_test)
     return X_train, y_train, X_test, y_test
+
+
+def plot_regression_data(X_train, y_train, X_test, y_test, y_predicted, y_sklearn_predicted=None, savefig_filename=None):
+    if len(X_train[0]) != 1:
+        print('Cannot plot because len(data) = %d > 1' % len(X_train[0]))
+        return
+    if savefig_filename is None:
+        return
+    import matplotlib.pyplot as plt
+    marker = '.'
+    plt.clf()
+
+    plt.plot(X_test, y_test, marker, c='red', label='test_data')
+    plt.plot(X_test, y_predicted, marker, c='blue', label='predicted')
+    plt.plot(X_train, y_train, marker, c='green', label='training_data')
+    if y_sklearn_predicted is not None:
+        plt.plot(X_test, y_sklearn_predicted, marker, c='purple', label='sklearn_predicted')
+
+    plt.legend()
+    plt.savefig(savefig_filename)
