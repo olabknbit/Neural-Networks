@@ -69,7 +69,7 @@ def read_network_layers_from_file(filename):
 
 
 def read_network_from_file(filename, activation_f, activation_f_derivative):
-    from neural_network_regression import NeuronLayer, NeuralNetwork
+    from perceptron.neural_network_regression import NeuronLayer, NeuralNetwork
     layers, _ = read_network_layers_from_file(filename)
     neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative)
 
@@ -80,7 +80,7 @@ def get_random_neurons(n_inputs, n_neurons):
 
 
 def initialize_network(neurons, n_inputs, biases, activation_f, activation_f_derivative):
-    from neural_network_regression import NeuronLayer, NeuralNetwork
+    from perceptron.neural_network_regression import NeuronLayer, NeuralNetwork
     # Combine the layers to create a neural network
     layers = []
     n_in = n_inputs

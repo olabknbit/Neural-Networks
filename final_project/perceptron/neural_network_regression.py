@@ -44,7 +44,7 @@ class NeuronLayer:
         return self.neurons
 
     def linear_propagate(self, inputs):
-        from util import activate, linear
+        from perceptron.util import activate, linear
         outputs = []
         for neuron in self.neurons:
             activation = activate(neuron['weights'], inputs)
@@ -125,6 +125,18 @@ class NeuralNetwork():
             error += abs(predicted_output - correct_output)
         return error / len(X_test), predicted_outputs
 
+    def genetic(self):
+        import random
+    #Mutation disconnect neuron
+        for layer in self.layers[:-1]:
+            for neuron in layer.neurons:
+                if random.random()<0.02:
+                    neuron['output'] = 0
+    #Mutation 
+        for layer in self.layers[:-1]:
+            for neuron in layer.neurons:
+                if random.random()<0.1:
+                    neuron['output'] = random.uniform(-1,1)
 
 def train(network, X_train, y_train, n_iter, l_rate=0.001, visualize_every=None):
     import numpy as np
@@ -139,9 +151,12 @@ def train(network, X_train, y_train, n_iter, l_rate=0.001, visualize_every=None)
             iter_error += np.sqrt((expected - output) ** 2)
             network.backward_propagate(expected)
             network.update_weights(row, l_rate)
+
+        network.genetic()
         if visualize_every is not None and epoch % visualize_every == 0:
             import visualize
             visualize.visualize_network(network, epoch)
+
 
         if epoch % 100 == 0:
             print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, iter_error))

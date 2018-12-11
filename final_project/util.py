@@ -1,4 +1,4 @@
-PREFIX = 'final_project/data/'
+PREFIX = r"C:/Users/micha/Desktop/nn3/Neural-Networks/final_project/data/"
 GEN = 'gen/'
 HELP = 'help/'
 PLOTS = 'plots/'

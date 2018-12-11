@@ -1,5 +1,6 @@
 def move_data(filename, d):
     m = int(d / 2)
+    print(filename)
     new_f = filename + '-moved'
     with open(filename, 'r') as in_f, open(new_f, 'w') as out_f:
         for line in in_f.readlines():
@@ -30,6 +31,7 @@ def generate_data(routes_lines, routes_stops, hours_n, hours_buses, trips_m, tri
                                                      hours_buses)
     # TODO move scaling data somewhere else.
     from util import DAY_LENGTH
+
     train_data_filename = move_data(train_data_filename, DAY_LENGTH)
     test_data_filename = move_data(test_data_filename, DAY_LENGTH)
 
@@ -53,14 +55,14 @@ def main():
                         help='If specified new datafiles will be generated. Otherwise using existing files')
 
     args = parser.parse_args()
-    should_generate = args.generate
+    should_generate = True
 
-    number_of_epochs = 1000
+    number_of_epochs = 100
     routes_lines = 3
     routes_stops = 6
     hours_n = 1000  # how many rows of train and test data to generate (split 60:40)
     hours_buses = [1,1,1]  # how many buses of each line should run
-    trips_transfers = 0  # max how many transfers each passenger can have
+    trips_transfers = 2  # max how many transfers each passenger can have
     for trips_m in [1000]:  # how many passenger's trips there are
         train_data_filename, test_data_filename = generate_data(routes_lines, routes_stops, hours_n, hours_buses,
                                                                 trips_m, trips_transfers, should_generate)

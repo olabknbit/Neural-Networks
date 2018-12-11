@@ -11,7 +11,7 @@ def generate_test_train_data(routes_filename, trips_filename, hours_filename, tr
     with open(hours_filename, 'r') as hours_file, open(train_data_filename, 'w') as train_data_file, open(
             test_data_filename, 'w') as test_data_file:
         train_n = int(len(results) * 0.4)
-        data = zip(results, hours_file.readlines())
+        data = list(zip(results, hours_file.readlines()))
         write_data(data[:train_n], train_data_file)
         write_data(data[train_n:], test_data_file)
 

@@ -78,6 +78,19 @@ class NeuralNetwork:
         for layer in self.layers[1:]:
             inputs = [neuron['output'] for neuron in previous_layer]
             previous_layer = layer.update_weights(inputs, l_rate)
+    def genetic(self)
+        import random
+    #Mutation disconnect neuron
+        for layer in self.layers[:-1]
+            for neuron in layer
+                if random.random()<0.02:
+                    neuron['output'] = 0
+    #Mutation 
+        for layer in self.layers[:-1]
+            for neuron in layer
+                if random.random()<0.1:
+                    neuron['output'] = random.uniform(-1,1)
+    
 
     def train(self, data_input, l_rate, n_iter, visualize_every):
         for epoch in range(n_iter):
@@ -103,11 +116,16 @@ class NeuralNetwork:
                 self.backward_propagate(expected)
                 # albo stochastic albo batchowe update TODO
                 self.update_weights(row, l_rate)
+
+            self.genetic()
+
             MSE = 1.0 * SE / (1.0 * len(data_input))
             accuracy = correct / len(data_input)
             if visualize_every is not None and epoch % visualize_every == 0:
                 print('>epoch=%d, lrate=%.3f, mse=%.3f, accuracy=%.3f' % (epoch, l_rate, MSE, accuracy))
                 # print(self.get_weights())
+
+
 
     def get_weights(self):
         return [str(layer.neurons) for layer in self.layers]

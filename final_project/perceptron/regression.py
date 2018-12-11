@@ -45,7 +45,7 @@ def print_data(y_test, predicted_outputs):
 
 
 def get_nn(create_nn, read_nn, biases, activation_f, activation_f_derivative, X_train):
-    from util import read_network_from_file, initialize_network
+    from perceptron.util  import read_network_from_file, initialize_network
     neural_network = None
     if create_nn is not None:
         # Calculate the number of inputs and outputs from the data.
@@ -73,16 +73,16 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
         print('Both train and test filename has to be provided for scaling')
         exit(1)
 
-    from util import get_split_dataset
+    from perceptron.util  import get_split_dataset
     X_train, y_train, X_test, y_test = get_split_dataset(train_filename, test_filename)
     neural_network = get_nn(create_nn, read_nn, biases, activation_f, activation_f_derivative, X_train)
 
     # Train neural network.
-    from neural_network_regression import train
+    from perceptron.neural_network_regression import train
     train(neural_network, X_train, y_train, number_of_epochs, l_rate, visualize_every)
 
     if save_nn is not None:
-        from util import write_network_to_file
+        from perceptron.util import write_network_to_file
         write_network_to_file(save_nn, neural_network)
 
     # Test the neural network.
