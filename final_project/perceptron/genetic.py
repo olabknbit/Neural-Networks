@@ -1,5 +1,5 @@
 def main(train_filename, test_filename, get_nn_filenames_f, n_networks=20, n_generations=10, use_cached=True):
-    '''
+    """
     Train 20 networks for 10 generation, after every generation kill 12 networks, and mutate the rest.
     Optimize for average error.
     Mutate
@@ -7,7 +7,7 @@ def main(train_filename, test_filename, get_nn_filenames_f, n_networks=20, n_gen
     - width of hidden layer
     (for now - in future TODO mutate more params - like delete connections between certain neurons etc.)
     :return: NeuralNetwork - the best trained network
-    '''
+    """
 
     activation='tanh'
     from util import initialize_random_network, get_split_dataset, write_network_to_file

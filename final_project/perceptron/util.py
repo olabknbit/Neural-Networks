@@ -2,15 +2,6 @@ import numpy as np
 from numpy import exp
 
 
-# Activation function - for weights and inputs returns their dot product.
-def activate(weights, inputs):
-    # Add bias.
-    activation = weights[-1]
-    for weight, input in zip(weights[:-1], inputs):
-        activation += weight * input
-    return activation
-
-
 def linear(activation):
     return activation
 
@@ -48,24 +39,52 @@ def sigmoid_derivative(x):
     return exp(-x) / (exp(-x) + 1) ** 2
 
 
-def write_network_to_file(filename, neural_network):
+def write_network_to_file_classification(filename, neural_network):
     with open(filename, 'w') as file:
-        if hasattr(neural_network, 'output_classes'):
-            file.write("%s\n" % neural_network.output_classes)
-        else:
-            file.write("\n")
+        file.write("%s\n" % neural_network.output_classes)
         file.writelines(["%s\n" % l for l in neural_network.get_weights()])
 
 
-def read_network_layers_from_file(filename):
+def write_network_to_file_regression(filename, neural_network):
+    with open(filename, 'w') as file:
+        file.writelines(["%s\n" % l for l in neural_network.get_weights()])
+
+
+def read_network_layers_from_file_classification(filename):
     with open(filename, 'r') as file:
         rows = file.readlines()
-        layers = [eval(row) for row in rows[1:]]
+        layers = [eval(row) for row in rows]
         output_classes = None
         if rows[0].strip() is not None and rows[0] != '\n':
             output_classes = eval(rows[0])
 
         return layers, output_classes
+
+
+def read_network_layers_from_file_regression(filename):
+    """
+    Layer is a tuple of network neurons and bias_weights
+    :param filename:
+    :return:
+    """
+    with open(filename, 'r') as file:
+        rows = file.readlines()
+        # layers = [print(neurons, bias_weights) for layer in rows:for neurons, bias_weights in eval(layer)]
+
+        layers = []
+        for row in rows:
+            layer = eval(row)
+            print(layer)
+            neurons = eval(layer['neurons'])
+            bias_weights = eval(layer['bias_weights'])
+            layers.append((neurons, bias_weights))
+
+        return layers
+
+
+def get_random_biases_weights(n_inputs):
+    from numpy import random
+    return [random.random() * 0.3 for _ in range(n_inputs)]
 
 
 def get_random_neurons(n_inputs, n_neurons):
@@ -76,16 +95,15 @@ def get_random_neurons(n_inputs, n_neurons):
             for _ in range(n_neurons)]
 
 
-def initialize_network(neurons, n_inputs, biases, activation_f, activation_f_derivative):
+def initialize_network(neurons, n_inputs, activation_f, activation_f_derivative):
     from neural_network_regression import NeuronLayer, NeuralNetwork
     # Combine the layers to create a neural network
     layers = []
     n_in = n_inputs
-    bias = 1 if biases else 0
     for n_neurons in neurons:
-        layers.append(NeuronLayer(get_random_neurons(n_in + bias, n_neurons)))
+        layers.append(NeuronLayer(get_random_neurons(n_in, n_neurons), get_random_biases_weights(n_neurons)))
         n_in = n_neurons
-    layers.append(NeuronLayer(get_random_neurons(n_in + bias, 1)))
+    layers.append(NeuronLayer(get_random_neurons(n_in, 1), get_random_biases_weights(1)))
 
     return NeuralNetwork(layers, activation_f, activation_f_derivative)
 
@@ -103,8 +121,8 @@ def get_activation_f_and_f_d_by_name(activation_f_name):
 
 def read_network_from_file(filename, activation_f, activation_f_derivative):
     from neural_network_regression import NeuronLayer, NeuralNetwork
-    layers, _ = read_network_layers_from_file(filename)
-    neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative)
+    layers = read_network_layers_from_file_regression(filename)
+    neural_network = NeuralNetwork([NeuronLayer(neurons, bias_weights) for neurons, bias_weights in layers], activation_f, activation_f_derivative)
     return neural_network
 
 

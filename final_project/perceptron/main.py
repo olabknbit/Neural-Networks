@@ -70,7 +70,7 @@ def main():
     if args.action == 'regression':
         import regression
         regression.main(args.train_filename, args.test_filename, args.create_nn, args.save_nn, args.read_nn,
-                        args.number_of_epochs, args.visualize_every, args.l_rate, args.biases, args.savefig_filename,
+                        args.number_of_epochs, args.visualize_every, args.l_rate, args.savefig_filename,
                         activation_f, activation_f_derivative)
     elif args.action == 'classification':
         import classification

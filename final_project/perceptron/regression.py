@@ -25,13 +25,13 @@ def print_data(y_test, predicted_outputs):
     print('RRAE = %.3f' % RRAE)
 
 
-def get_nn(create_nn, read_nn, biases, activation_f, activation_f_derivative, X_train):
+def get_nn(create_nn, read_nn, activation_f, activation_f_derivative, X_train):
     from util import read_network_from_file, initialize_network
     neural_network = None
     if create_nn is not None:
         # Calculate the number of inputs and outputs from the data.
         n_inputs = len(X_train[0])
-        neural_network = initialize_network(create_nn, n_inputs, biases, activation_f, activation_f_derivative)
+        neural_network = initialize_network(create_nn, n_inputs, activation_f, activation_f_derivative)
     elif read_nn is not None:
         neural_network = read_network_from_file(read_nn, activation_f, activation_f_derivative)
 
@@ -48,7 +48,7 @@ def sklearn_test(nn, X_train, y_train, X_test, y_test):
     return lr.predict(X_test)
 
 
-def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_epochs, visualize_every, l_rate, biases,
+def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_epochs, visualize_every, l_rate,
          savefig_filename, activation_f, activation_f_derivative, compare_to_sklearn=False):
     if train_filename is None or test_filename is None:
         print('Both train and test filename has to be provided for scaling')
@@ -56,14 +56,14 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
 
     from util import get_split_dataset
     X_train, y_train, X_test, y_test = get_split_dataset(train_filename, test_filename)
-    neural_network = get_nn(create_nn, read_nn, biases, activation_f, activation_f_derivative, X_train)
+    neural_network = get_nn(create_nn, read_nn, activation_f, activation_f_derivative, X_train)
 
     # Train neural network.
     neural_network.train(X_train, y_train, number_of_epochs, l_rate, visualize_every)
 
     if save_nn is not None:
-        from util import write_network_to_file
-        write_network_to_file(save_nn, neural_network)
+        from util import write_network_to_file_regression
+        write_network_to_file_regression(save_nn, neural_network)
 
     # Test the neural network.
     avg_error, y_predicted = neural_network.test(X_test, y_test)

@@ -1,19 +1,17 @@
-# Activation function - for weights and inputs returns their dot product.
-def activate(weights, inputs):
-    # Add bias.
-    activation = weights[-1]
-    for weight, input in zip(weights[:-1], inputs):
+def activate(weights, inputs, bias):
+    activation = bias
+    for weight, input in zip(weights, inputs):
         activation += weight * input
     return activation
 
 
 class NeuronLayer:
-    def __init__(self, neurons, biases=True):
+    def __init__(self, neurons, bias_weights):
         """
         :param neurons: list, of which an element is a dict with 'weights' : list, 'delta' : float, 'output' : float
         """
         self.neurons = neurons
-        self.biases = biases
+        self.bias_weights = bias_weights
 
     def __len__(self):
         return len(self.neurons[0]['weights'])
@@ -21,8 +19,8 @@ class NeuronLayer:
     # Calculate what are the outputs of the layer for the given inputs.
     def forward_propagate(self, inputs, activation_f):
         outputs = []
-        for neuron in self.neurons:
-            activation = activate(neuron['weights'], inputs)
+        for neuron, bias in zip(self.neurons, self.bias_weights):
+            activation = activate(neuron['weights'], inputs, bias)
             neuron['output'] = activation_f(activation)
             outputs.append(neuron['output'])
 
@@ -37,26 +35,24 @@ class NeuronLayer:
         return self
 
     def update_weights(self, inputs, l_rate):
-        for neuron in self.neurons:
+        for i, neuron in enumerate(self.neurons):
             for j in range(len(inputs)):
                 if neuron['active_weights'][j]:
                     neuron['weights'][j] += l_rate * neuron['delta'] * inputs[j]
-            if neuron['active_weights'][-1]:
-                neuron['weights'][-1] += l_rate * neuron['delta']
+            self.bias_weights[i] += l_rate * neuron['delta']
         return self.neurons
 
     def linear_propagate(self, inputs):
-        from util import activate, linear
+        from util import linear
         outputs = []
-        for neuron in self.neurons:
-            activation = activate(neuron['weights'], inputs)
+        for neuron, bias in zip(self.neurons, self.bias_weights):
+            activation = activate(neuron['weights'], inputs, bias)
             neuron['output'] = linear(activation)
             outputs.append(neuron['output'])
         return outputs
 
     def get_neurons(self):
-        biases = -1 if self.biases else 0
-        return len(self) + biases
+        return len(self)
 
 
 class NeuralNetwork():
@@ -108,13 +104,13 @@ class NeuralNetwork():
             previous_layer = layer.update_weights(inputs, l_rate)
 
     def get_params(self):
-        '''
+        """
         :return: list of number of neurons in each deep layer
-        '''
+        """
         return [layer.get_neurons() for layer in self.layers[1:]]
 
     def get_weights(self):
-        return [str(layer.neurons) for layer in self.layers]
+        return [str({'neurons': str(layer.neurons), 'bias_weights': str(layer.bias_weights)}) for layer in self.layers[1:]]
 
     def predict(self, row):
         return self.forward_propagate(row)
