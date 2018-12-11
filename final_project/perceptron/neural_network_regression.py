@@ -9,9 +9,9 @@ def activate(weights, inputs):
 
 class NeuronLayer:
     def __init__(self, neurons, biases=True):
-        '''
-        :param neurons: list, of which element is a dict with 'weights' : list, 'delta' : float, 'output' : float
-        '''
+        """
+        :param neurons: list, of which an element is a dict with 'weights' : list, 'delta' : float, 'output' : float
+        """
         self.neurons = neurons
         self.biases = biases
 
@@ -39,8 +39,10 @@ class NeuronLayer:
     def update_weights(self, inputs, l_rate):
         for neuron in self.neurons:
             for j in range(len(inputs)):
-                neuron['weights'][j] += l_rate * neuron['delta'] * inputs[j]
-            neuron['weights'][-1] += l_rate * neuron['delta']
+                if neuron['active_weights'][j]:
+                    neuron['weights'][j] += l_rate * neuron['delta'] * inputs[j]
+            if neuron['active_weights'][-1]:
+                neuron['weights'][-1] += l_rate * neuron['delta']
         return self.neurons
 
     def linear_propagate(self, inputs):
@@ -59,11 +61,11 @@ class NeuronLayer:
 
 class NeuralNetwork():
     def __init__(self, layers, activation_f, activation_f_derivative):
-        '''
+        """
         :param layers: list of NeuronLayers
         :param activation_f: lambda taking x : float and returning another float
         :param activation_f_derivative: lambda derivative of activation_f, taking x : float and returning another float
-        '''
+        """
         self.layers = layers
         self.activation_f = lambda x: activation_f(x)
         self.activation_f_derivative = lambda x: activation_f_derivative(x)
@@ -79,7 +81,7 @@ class NeuralNetwork():
         inputs = outputs
         outputs = self.layers[-1].linear_propagate(inputs)
 
-        return outputs
+        return outputs[0]
 
     # Calculate 'delta' for every neuron. This will then be used to update the weights of the neurons.
     def backward_propagate(self, expected_val):
@@ -120,10 +122,10 @@ class NeuralNetwork():
     def test(self, X_test, y_test):
         predicted_outputs = []
         error = 0.0
-        for row, correct_output in zip(X_test, y_test):
-            predicted_output = self.predict(row)[0]
+        for row, expected in zip(X_test, y_test):
+            predicted_output = self.predict(row)
             predicted_outputs.append(predicted_output)
-            error += abs(predicted_output - correct_output)
+            error += abs(predicted_output - expected)
         self.score = error / len(X_test)
         return self.score, predicted_outputs
 
@@ -135,7 +137,7 @@ class NeuralNetwork():
             for row, expected in zip(X_train, y_train):
                 # The net should only predict the class based on the features,
                 # so the last cell which represents the class is not passed forward.
-                output = self.forward_propagate(row)[0]
+                output = self.forward_propagate(row)
 
                 iter_error += np.sqrt((expected - output) ** 2)
                 self.backward_propagate(expected)

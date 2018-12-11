@@ -71,7 +71,9 @@ def read_network_layers_from_file(filename):
 def get_random_neurons(n_inputs, n_neurons):
     from numpy import random
     # random numbers from range [0; 0.3) are proven to be best
-    return [{'weights': [random.random() * 0.3 for _ in range(n_inputs)]} for _ in range(n_neurons)]
+    return [{'weights': [random.random() * 0.3 for _ in range(n_inputs)],
+             'active_weights': [True for _ in range(n_inputs)]}
+            for _ in range(n_neurons)]
 
 
 def initialize_network(neurons, n_inputs, biases, activation_f, activation_f_derivative):
@@ -162,7 +164,8 @@ def get_split_dataset(train_filename, test_filename):
     return X_train, y_train, X_test, y_test
 
 
-def plot_regression_data(X_train, y_train, X_test, y_test, y_predicted, y_sklearn_predicted=None, savefig_filename=None):
+def plot_regression_data(X_train, y_train, X_test, y_test, y_predicted, y_sklearn_predicted=None,
+                         savefig_filename=None):
     if len(X_train[0]) != 1:
         print('Cannot plot because len(data) = %d > 1' % len(X_train[0]))
         return
