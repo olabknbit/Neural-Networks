@@ -69,22 +69,6 @@ def main():
         from functools import partial
         get_nn_filenames_f = partial(get_nn_filenames, routes_lines, routes_stops,
                                                          hours_n, hours_buses, trips_m, trips_transfers)
-        # for nn in [[40]]:
-        #     from perceptron.util import tanh, tanh_derivative
-        #     activation_f, activation_f_derivative = tanh, tanh_derivative
-        #     from perceptron import regression
-        #     savefig_filename, save_nn_filename = get_nn_filenames_f(nn)
-        #     print(save_nn_filename)
-        #     avg_error = regression.main(train_data_filename, test_data_filename,
-        #                                activation_f=activation_f,
-        #                                activation_f_derivative=activation_f_derivative,
-        #                                visualize_every=None,
-        #                                create_nn=nn, save_nn=save_nn_filename + 'a',
-        #                                read_nn=None, number_of_epochs=number_of_epochs,
-        #                                l_rate=0.001, savefig_filename=savefig_filename + 'a.png',
-        #                                compare_to_sklearn=True)
-        #     print(nn, 'average error', avg_error)
-        #     print('_________________________________________')
         from perceptron import genetic
 
         genetic.main(train_data_filename, test_data_filename, get_nn_filenames_f)
