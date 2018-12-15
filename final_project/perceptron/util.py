@@ -96,25 +96,29 @@ def get_random_neurons(n_inputs, n_neurons):
 
 
 def initialize_network(n_inputs, activation_f, activation_f_derivative):
-    from nnr_new import NeuralNetwork, Neuron
+    from nnr_new import NeuralNetwork, Neuron, Innovation
     from numpy import random
     id = 0
     neurons = []
     input_neurons = []
     in_ns = {}
     for _ in range(n_inputs):
-        neuron = Neuron(id, level=0, in_ns={}, out_ns=[], bias_weight=0, activation_f=activation_f, activation_f_derivative=activation_f_derivative)
+        neuron = Neuron(id, level=0, in_ns={}, out_ns=[], bias_weight=0, activation_f=activation_f,
+                        activation_f_derivative=activation_f_derivative)
         neurons.append(neuron)
         input_neurons.append(neuron)
         in_ns[neuron] = random.random() * 0.3
         id += 1
 
+    innovations = []
     output_neuron = Neuron(id, 1, in_ns, [], 0.3, activation_f, activation_f_derivative)
     for in_n in input_neurons:
         in_n.out_ns.append(output_neuron)
+        innovations.append(Innovation(source=in_n, end=output_neuron))
+
     neurons.append(output_neuron)
 
-    return NeuralNetwork(neurons, input_neurons, output_neuron, activation_f, activation_f_derivative)
+    return NeuralNetwork(neurons, input_neurons, output_neuron, activation_f, activation_f_derivative, innovations)
 
 
 def get_activation_f_and_f_d_by_name(activation_f_name):
@@ -131,7 +135,8 @@ def get_activation_f_and_f_d_by_name(activation_f_name):
 def read_network_from_file(filename, activation_f, activation_f_derivative):
     from neural_network_regression import NeuronLayer, NeuralNetwork
     layers = read_network_layers_from_file_regression(filename)
-    neural_network = NeuralNetwork([NeuronLayer(neurons, bias_weights) for neurons, bias_weights in layers], activation_f, activation_f_derivative)
+    neural_network = NeuralNetwork([NeuronLayer(neurons, bias_weights) for neurons, bias_weights in layers],
+                                   activation_f, activation_f_derivative)
     return neural_network
 
 

@@ -18,44 +18,46 @@ def validate(net):
 
 def randomly_mutate(net, activation_f, activation_f_d):
     import random
+    from nnr_new import Innovation
     prob_add_link = 0.05
     prob_add_neuron = 0.03
     neurons = net.neurons
     n_neurons = len(neurons)
 
-    def already_have_link(neuron1, neuron2):
-        print(neuron1.id, neuron2.id, neuron1 in neuron2.in_ns or neuron2 in neuron1.in_ns)
-        return neuron1 in neuron2.in_ns or neuron2 in neuron1.in_ns
-
-    def get_two_neurons():
-        import itertools
-        combs = list(itertools.combinations(neurons, 2))
-        perms = list(itertools.permutations(range(len(combs))))
-        perm = perms[random.randint(0, len(perms) - 1)]
-
-        def approve(neuron1, neuron2):
-            return neuron1 is not None and neuron2 is not None and neuron1.level != neuron2.level and not already_have_link(
-                neuron1, neuron2)
-
-        for comb_index in perm:
-            neuron1, neuron2 = combs[comb_index]
-            if approve(neuron1, neuron2):
-                break
-
-        if approve(neuron1, neuron2):
-            if neuron1.level > neuron2.level:
-                return neuron2, neuron1
-            else:
-                return neuron1, neuron2
-        return None
-
     if random.random() < prob_add_link:
+        def already_have_link(neuron1, neuron2):
+            print(neuron1.id, neuron2.id, neuron1 in neuron2.in_ns or neuron2 in neuron1.in_ns)
+            return neuron1 in neuron2.in_ns or neuron2 in neuron1.in_ns
+
+        def get_two_neurons():
+            import itertools
+            combs = list(itertools.combinations(neurons, 2))
+            perms = list(itertools.permutations(range(len(combs))))
+            perm = perms[random.randint(0, len(perms) - 1)]
+
+            def approve(neuron1, neuron2):
+                return neuron1 is not None and neuron2 is not None and neuron1.level != neuron2.level \
+                       and not already_have_link(neuron1, neuron2)
+
+            for comb_index in perm:
+                neuron1, neuron2 = combs[comb_index]
+                if approve(neuron1, neuron2):
+                    break
+
+            if approve(neuron1, neuron2):
+                if neuron1.level > neuron2.level:
+                    return neuron2, neuron1
+                else:
+                    return neuron1, neuron2
+            return None
+
         nns = get_two_neurons()
         if nns is not None:
             neuron1, neuron2 = nns
             print('adding link', neuron1.id, neuron2.id)
             neuron2.in_ns[neuron1] = random.random() * 0.3
             neuron1.out_ns.append(neuron2)
+            net.innovations.append(Innovation(neuron1, neuron2))
 
     if random.random() < prob_add_neuron:
         neuron1 = neurons[random.randint(1, n_neurons - 1)]
@@ -89,6 +91,15 @@ def randomly_mutate(net, activation_f, activation_f_d):
         neuron1.out_ns.append(new_neuron)
         neuron2.in_ns[new_neuron] = weight
         neurons.append(new_neuron)
+
+        def get_innovation_index():
+            for index, inn in enumerate(net.innovations):
+                if inn.source == neuron1.id and inn.source == neuron2.id:
+                    return index
+        innovation_index = get_innovation_index()
+        net.innovations[innovation_index].disabled = True
+        net.innovations.append(new_neuron, neuron2)
+        net.innovations.append(neuron1, new_neuron)
 
         validate(net)
     return net

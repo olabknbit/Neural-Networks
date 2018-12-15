@@ -5,59 +5,23 @@ def activate(weights, inputs, bias):
     return activation
 
 
-def n_list_to_str(n_list):
+def neurons_to_str(n_list):
     return str([neuron.to_str() for neuron in n_list])
 
 
-def n_dict_to_str(n_dict):
+def in_ns_to_str(n_dict):
     return str({neuron.id: weight for neuron, weight in n_dict.iteritems()})
-# class NeuronLayer:
-#     def __init__(self, neurons, bias_weights):
-#         """
-#         :param neurons: list, of which an element is a dict with 'weights' : list, 'delta' : float, 'output' : float
-#         """
-#         self.neurons = neurons
-#
-#     def __len__(self):
-#         return len(self.neurons[0]['weights'])
-#
-#     # Calculate what are the outputs of the layer for the given inputs.
-#     def forward_propagate(self, inputs, activation_f):
-#         outputs = []
-#         for neuron, bias in zip(self.neurons, self.bias_weights):
-#             activation = activate(neuron['weights'], inputs, bias)
-#             neuron['output'] = activation_f(activation)
-#             outputs.append(neuron['output'])
-#
-#         return outputs
-#
-#     def backward_propagate(self, next_layer, activation_f_derivative):
-#         for i, neuron_i in enumerate(self.neurons):
-#             error = 0.0
-#             for neuron_j in next_layer.neurons:
-#                 error += (neuron_j['weights'][i] * neuron_j['delta'])
-#             neuron_i['delta'] = error * activation_f_derivative(neuron_i['output'])
-#         return self
-#
-#     def update_weights(self, inputs, l_rate):
-#         for i, neuron in enumerate(self.neurons):
-#             for j in range(len(inputs)):
-#                 if neuron['active_weights'][j]:
-#                     neuron['weights'][j] += l_rate * neuron['delta'] * inputs[j]
-#             self.bias_weights[i] += l_rate * neuron['delta']
-#         return self.neurons
-#
-#     def linear_propagate(self, inputs):
-#         from util import linear
-#         outputs = []
-#         for neuron, bias in zip(self.neurons, self.bias_weights):
-#             activation = activate(neuron['weights'], inputs, bias)
-#             neuron['output'] = linear(activation)
-#             outputs.append(neuron['output'])
-#         return outputs
-#
-#     def get_neurons(self):
-#         return len(self)
+
+
+def neurons_to_ids_str(n_list):
+    str([neuron.id for neuron in n_list])
+
+
+class Innovation:
+    def __init__(self, source, end, disabled=False):
+        self.source = source
+        self.end = end
+        self.disabled = disabled
 
 
 class Neuron:
@@ -108,15 +72,15 @@ class Neuron:
         self.delta = None
 
     def to_str(self):
-        n = {'id': self.id, 'in_ns': n_dict_to_str(self.in_ns), 'out_ns': str([neuron.id for neuron in self.out_ns]), 'bias_weight': self.bias_weight}
+        n = {'id': self.id, 'in_ns': in_ns_to_str(self.in_ns), 'out_ns': neurons_to_ids_str(self.out_ns),
+             'bias_weight': self.bias_weight}
         return str(n)
 
 
 class NeuralNetwork:
-
-    def __init__(self, neurons, input_neurons, output_neuron, activation_f, activation_f_derivative):
+    def __init__(self, neurons, input_neurons, output_neuron, activation_f, activation_f_derivative,
+                 innovations=list()):
         """
-        :param layers: list of NeuronLayers
         :param activation_f: lambda taking x : float and returning another float
         :param activation_f_derivative: lambda derivative of activation_f, taking x : float and returning another float
         """
@@ -125,7 +89,9 @@ class NeuralNetwork:
         self.output_neuron = output_neuron
         self.activation_f = lambda x: activation_f(x)
         self.activation_f_derivative = lambda x: activation_f_derivative(x)
+
         self.score = None
+        self.innovations = innovations
 
     # Pipe data row through the network and get final outputs.
     def forward_propagate(self, row):
@@ -157,8 +123,8 @@ class NeuralNetwork:
         :return: list of number of neurons in each deep layer
         """
 
-        net_s = {'neurons': n_list_to_str(self.neurons),
-                 'input_neurons': str([neuron.id for neuron in self.input_neurons]),
+        net_s = {'neurons': neurons_to_str(self.neurons),
+                 'input_neurons': neurons_to_ids_str(self.input_neurons),
                  'output_neuron': self.output_neuron.to_str(),
                  }
         return str(net_s)

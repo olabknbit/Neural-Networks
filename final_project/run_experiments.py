@@ -57,7 +57,6 @@ def main():
 
     import random
     random.seed(123)
-    number_of_epochs = 10000
     routes_lines = 3
     routes_stops = 6
     hours_n = 1000  # how many rows of train and test data to generate (split 60:40)
