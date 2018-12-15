@@ -18,7 +18,7 @@ def reLu_derivative(output):
     return 0 if output < 0 else 1
 
 
-def tanh(x):
+def _tanh(x):
     return np.tanh(x) + 1
 
 
@@ -47,7 +47,7 @@ def write_network_to_file_classification(filename, neural_network):
 
 def write_network_to_file_regression(filename, neural_network):
     with open(filename, 'w') as file:
-        file.writelines(["%s\n" % l for l in neural_network.get_weights()])
+        file.write(neural_network.to_str())
 
 
 def read_network_layers_from_file_classification(filename):
@@ -83,7 +83,7 @@ def read_network_layers_from_file_regression(filename):
 
 
 def get_random_biases_weights(n_inputs):
-    from numpy import random
+    import random
     return [random.random() * 0.3 for _ in range(n_inputs)]
 
 
@@ -95,22 +95,31 @@ def get_random_neurons(n_inputs, n_neurons):
             for _ in range(n_neurons)]
 
 
-def initialize_network(neurons, n_inputs, activation_f, activation_f_derivative):
-    from neural_network_regression import NeuronLayer, NeuralNetwork
-    # Combine the layers to create a neural network
-    layers = []
-    n_in = n_inputs
-    for n_neurons in neurons:
-        layers.append(NeuronLayer(get_random_neurons(n_in, n_neurons), get_random_biases_weights(n_neurons)))
-        n_in = n_neurons
-    layers.append(NeuronLayer(get_random_neurons(n_in, 1), get_random_biases_weights(1)))
+def initialize_network(n_inputs, activation_f, activation_f_derivative):
+    from nnr_new import NeuralNetwork, Neuron
+    from numpy import random
+    id = 0
+    neurons = []
+    input_neurons = []
+    in_ns = {}
+    for _ in range(n_inputs):
+        neuron = Neuron(id, level=0, in_ns={}, out_ns=[], bias_weight=0, activation_f=activation_f, activation_f_derivative=activation_f_derivative)
+        neurons.append(neuron)
+        input_neurons.append(neuron)
+        in_ns[neuron] = random.random() * 0.3
+        id += 1
 
-    return NeuralNetwork(layers, activation_f, activation_f_derivative)
+    output_neuron = Neuron(id, 1, in_ns, [], 0.3, activation_f, activation_f_derivative)
+    for in_n in input_neurons:
+        in_n.out_ns.append(output_neuron)
+    neurons.append(output_neuron)
+
+    return NeuralNetwork(neurons, input_neurons, output_neuron, activation_f, activation_f_derivative)
 
 
 def get_activation_f_and_f_d_by_name(activation_f_name):
     if activation_f_name == 'tanh':
-        activation_f, activation_f_d = tanh, tanh_derivative
+        activation_f, activation_f_d = _tanh, tanh_derivative
     elif activation_f_name == 'sigmoid':
         activation_f, activation_f_d = sigmoid, sigmoid_derivative
     else:
@@ -131,13 +140,9 @@ def read_network_from_file_f_name(filename, activation_f_name):
     return read_network_from_file(filename, activation_f, activation_f_d)
 
 
-def initialize_random_network(n_inputs, n_hidden_layers=(1, 5), n_neurons=(5, 100), activation='tanh', biases=True,
-                              random_state=1):
-    import random
+def initialize_start_network(n_inputs, activation='tanh'):
     activation_f, activation_f_d = get_activation_f_and_f_d_by_name(activation)
-    n_layers = random.randint(*n_hidden_layers)
-    neurons = [random.randint(*n_neurons) for _ in range(n_layers)]
-    return initialize_network(neurons, n_inputs, biases, activation_f, activation_f_d)
+    return initialize_network(n_inputs, activation_f, activation_f_d)
 
 
 def scale_data(y_train, y_test):

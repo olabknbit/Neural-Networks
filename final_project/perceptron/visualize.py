@@ -38,36 +38,18 @@ def visualize(layers, epoch):
     f.view()
 
 
-def simple_vis(layers, epoch):
+def simple_vis(network):
     from graphviz import Digraph
-    diagraph = Digraph(epoch)
+    diagraph = Digraph()
     diagraph.attr(rankdir='LR', size='50')
 
-    i = 0
-    d_layer = []
+    for neuron in network.neurons:
+        diagraph.node(str(neuron.id))
 
-    # Layer 0 neuron 0 weights:
-    for _ in layers[0][0]['weights']:
-        diagraph.node(str(i))
-        d_layer.append(str(i))
-        i += 1
-
-    d_prev_layer = d_layer
-    d_layer = []
-
-    for layer in layers:
-        for neuron in layer:
-            diagraph.node(str(i))
-            d_layer.append(str(i))
-            j = 0
-            for neuron_prev_layer in d_prev_layer:
-                if neuron['active_weights'][j]:
-                    label = str('%.3f' % neuron['weights'][j])
-                    diagraph.edge(str(neuron_prev_layer), str(i), xlabel=str(label), fontsize='8', penwidth='0.01')
-                j += 1
-            i += 1
-        d_prev_layer = d_layer
-        d_layer = []
+    for n_out in network.neurons:
+        for n_in, weight in n_out.in_ns.iteritems():
+            label = str('%.3f' % weight)
+            diagraph.edge(str(n_in.id), str(n_out.id), xlabel=str(label), fontsize='8', penwidth='0.01')
 
     diagraph.view()
 
@@ -114,14 +96,6 @@ def visualize2(layers):
 
     plt.axis('off')
     plt.show()
-
-
-def visualize_network(network, n_epoch):
-    from util import read_network_layers_from_file, write_network_to_file
-    tmp_filename = "tmp/temp"
-    write_network_to_file(tmp_filename, network)
-    layers, _ = read_network_layers_from_file(tmp_filename)
-    simple_vis(layers, str(n_epoch))
 
 
 def main():

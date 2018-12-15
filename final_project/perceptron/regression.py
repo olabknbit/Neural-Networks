@@ -31,7 +31,7 @@ def get_nn(create_nn, read_nn, activation_f, activation_f_derivative, X_train):
     if create_nn is not None:
         # Calculate the number of inputs and outputs from the data.
         n_inputs = len(X_train[0])
-        neural_network = initialize_network(create_nn, n_inputs, activation_f, activation_f_derivative)
+        neural_network = initialize_network(n_inputs, activation_f, activation_f_derivative)
     elif read_nn is not None:
         neural_network = read_network_from_file(read_nn, activation_f, activation_f_derivative)
 
