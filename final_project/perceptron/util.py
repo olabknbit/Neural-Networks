@@ -19,11 +19,11 @@ def reLu_derivative(output):
 
 
 def _tanh(x):
-    return np.ma.tanh(x) + 1
+    return np.tanh(x) + 1
 
 
 def tanh_derivative(x):
-    return 1.0 - np.ma.tanh(x) ** 2
+    return 1.0 - np.tanh(x) ** 2
 
 
 # Sigmoid transfer function
@@ -137,6 +137,40 @@ def read_network_from_file(filename, activation_f, activation_f_derivative):
     layers = read_network_layers_from_file_regression(filename)
     neural_network = NeuralNetwork([NeuronLayer(neurons, bias_weights) for neurons, bias_weights in layers],
                                    activation_f, activation_f_derivative)
+    return neural_network
+
+
+def read_network_from_file_nnr_new(filename, activation_f=_tanh, activation_f_derivative=tanh_derivative):
+    from nnr_new import Neuron, NeuralNetwork
+
+    def get_neuron(d):
+        out_ns = eval(d['out_ns'])
+        out_ns = [int(n_id) for n_id in out_ns]
+        bias_weight = d['bias_weight']
+        in_ns = eval(d['in_ns'])
+        in_ns = {int(n_id): float(weight) for n_id, weight in in_ns.iteritems()}
+        id = d['id']
+        level = d['level']
+        return Neuron(id, level, in_ns, out_ns, bias_weight, activation_f, activation_f_derivative)
+
+    def get_neuron_by_id(neurons, neuron_id):
+        for neuron in neurons:
+            if neuron.id == neuron_id:
+                return neuron
+
+    with open(filename, 'r') as file:
+        text = file.read()
+        nn = eval(text)
+        neurons = eval(nn['neurons'])
+        neurons = [get_neuron(eval(neuron)) for neuron in neurons]
+        for neuron in neurons:
+            neuron.in_ns = {get_neuron_by_id(neurons, n_in_id): n_in_weight for n_in_id, n_in_weight in
+                            neuron.in_ns.iteritems()}
+        input_neurons = eval(nn['input_neurons'])
+        input_neurons = [get_neuron_by_id(neurons, neuron_id) for neuron_id in input_neurons]
+        output_neuron = get_neuron_by_id(neurons, eval(nn['output_neuron'])['id'])
+        neural_network = NeuralNetwork(neurons, input_neurons, output_neuron, activation_f, activation_f_derivative)
+
     return neural_network
 
 

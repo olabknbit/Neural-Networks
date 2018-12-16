@@ -141,7 +141,7 @@ def calculate_compatibility(net1, net2):
     return c1 * E / N + c2 * D / N + c3 * W
 
 
-def main(train_filename, test_filename, get_nn_filenames_f, n_networks=10, n_generations=10):
+def main(train_filename, test_filename, get_nn_filenames_f, n_networks=10, n_generations=5):
     activation = 'tanh'
     from util import get_activation_f_and_f_d_by_name, initialize_network, get_split_dataset
     from nnr_new import score, clone
@@ -150,9 +150,10 @@ def main(train_filename, test_filename, get_nn_filenames_f, n_networks=10, n_gen
     global INNOVATION_NUMBER
     INNOVATION_NUMBER = n_inputs
     activation_f, activation_f_d = get_activation_f_and_f_d_by_name(activation)
-    networks = [initialize_network(n_inputs, activation_f=activation_f, activation_f_derivative=activation_f_d, _id=id) for id in range(n_networks)]
-
+    networks = [initialize_network(n_inputs, activation_f=activation_f, activation_f_derivative=activation_f_d, _id=id)
+                for id in range(n_networks)]
     networks = [randomly_mutate(net, activation_f, activation_f_d) for net in networks]
+    network_id = n_networks
 
     print("Initialized %d networks:" % n_networks)
 
@@ -167,8 +168,12 @@ def main(train_filename, test_filename, get_nn_filenames_f, n_networks=10, n_gen
 
         print('Score networks')
         for i, n in enumerate(networks):
-            savefig_filename = str(n.id) + '-' + str(gen) + '.png'
+            base_name = str(n.id) + '-' + str(gen)
+            savefig_filename = base_name + '.png'
             score(n, X_train, y_train, X_test, y_test, n_iter=100, savefig_filename=savefig_filename)
+            save_nn_filename = str(n.score) + '-' + base_name
+            from util import write_network_to_file_regression
+            write_network_to_file_regression(save_nn_filename, n)
 
         networks.sort(cmp=cmp_nn)
 
@@ -176,4 +181,7 @@ def main(train_filename, test_filename, get_nn_filenames_f, n_networks=10, n_gen
         n_keep = int(len(networks) * 0.2)
         best_nets = clone(networks[:n_keep])
         mutated_nets = [randomly_mutate(net, activation_f, activation_f_d) for net in networks[:-n_keep]]
+        for net in mutated_nets:
+            net.id = network_id
+            network_id += 1
         networks = best_nets + mutated_nets

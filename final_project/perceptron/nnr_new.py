@@ -138,10 +138,9 @@ class NeuralNetwork:
         return str(net_s)
 
     def predict(self, row):
-        y_predicted =self.forward_propagate(row)
+        y_predicted = self.forward_propagate(row)
         self.reset()
         return y_predicted
-
 
     def test(self, X_test, y_test):
         predicted_outputs = []
