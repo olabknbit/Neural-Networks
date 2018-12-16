@@ -14,13 +14,14 @@ def in_ns_to_str(n_dict):
 
 
 def neurons_to_ids_str(n_list):
-    str([neuron.id for neuron in n_list])
+    return str([neuron.id for neuron in n_list])
 
 
 class Innovation:
-    def __init__(self, source, end, disabled=False):
+    def __init__(self, source, end, innovation_number, disabled=False):
         self.source = source
         self.end = end
+        self.innovation_number = innovation_number
         self.disabled = disabled
 
 
@@ -73,13 +74,13 @@ class Neuron:
 
     def to_str(self):
         n = {'id': self.id, 'in_ns': in_ns_to_str(self.in_ns), 'out_ns': neurons_to_ids_str(self.out_ns),
-             'bias_weight': self.bias_weight}
+             'bias_weight': self.bias_weight, 'level': self.level}
         return str(n)
 
 
 class NeuralNetwork:
     def __init__(self, neurons, input_neurons, output_neuron, activation_f, activation_f_derivative,
-                 innovations=list()):
+                 innovations=list(), id=0):
         """
         :param activation_f: lambda taking x : float and returning another float
         :param activation_f_derivative: lambda derivative of activation_f, taking x : float and returning another float
@@ -92,6 +93,13 @@ class NeuralNetwork:
 
         self.score = None
         self.innovations = innovations
+        self.id = id
+
+    def print_input_neurons(self):
+        return neurons_to_ids_str(self.input_neurons)
+
+    def get_innovation_weight(self, source, end):
+        return self.neurons[end].in_ns[source]
 
     # Pipe data row through the network and get final outputs.
     def forward_propagate(self, row):
@@ -130,7 +138,10 @@ class NeuralNetwork:
         return str(net_s)
 
     def predict(self, row):
-        return self.forward_propagate(row)
+        y_predicted =self.forward_propagate(row)
+        self.reset()
+        return y_predicted
+
 
     def test(self, X_test, y_test):
         predicted_outputs = []
@@ -172,10 +183,14 @@ class NeuralNetwork:
 
 
 def score(network, X_train, y_train, X_test, y_test, n_iter, savefig_filename=None):
-    if network.score is None:
-        network.train(X_train, y_train, n_iter)
-        score, y_predicted = network.test(X_test, y_test)
-        if savefig_filename is not None:
-            from util import plot_regression_data
-            plot_regression_data(X_test, y_train, X_test, y_test, y_predicted, savefig_filename=savefig_filename)
+    network.train(X_train, y_train, n_iter)
+    score, y_predicted = network.test(X_test, y_test)
+    if savefig_filename is not None:
+        from util import plot_regression_data
+        plot_regression_data(X_train, y_train, X_test, y_test, y_predicted, savefig_filename=savefig_filename)
     return network.score
+
+
+def clone(network):
+    from copy import deepcopy
+    return deepcopy(network)

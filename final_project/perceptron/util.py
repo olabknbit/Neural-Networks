@@ -19,11 +19,11 @@ def reLu_derivative(output):
 
 
 def _tanh(x):
-    return np.tanh(x) + 1
+    return np.ma.tanh(x) + 1
 
 
 def tanh_derivative(x):
-    return 1.0 - np.tanh(x) ** 2
+    return 1.0 - np.ma.tanh(x) ** 2
 
 
 # Sigmoid transfer function
@@ -95,7 +95,7 @@ def get_random_neurons(n_inputs, n_neurons):
             for _ in range(n_neurons)]
 
 
-def initialize_network(n_inputs, activation_f, activation_f_derivative):
+def initialize_network(n_inputs, activation_f, activation_f_derivative, _id=0):
     from nnr_new import NeuralNetwork, Neuron, Innovation
     from numpy import random
     id = 0
@@ -112,13 +112,13 @@ def initialize_network(n_inputs, activation_f, activation_f_derivative):
 
     innovations = []
     output_neuron = Neuron(id, 1, in_ns, [], 0.3, activation_f, activation_f_derivative)
-    for in_n in input_neurons:
+    for index, in_n in enumerate(input_neurons):
         in_n.out_ns.append(output_neuron)
-        innovations.append(Innovation(source=in_n, end=output_neuron))
+        innovations.append(Innovation(source=in_n, end=output_neuron, innovation_number=index))
 
     neurons.append(output_neuron)
 
-    return NeuralNetwork(neurons, input_neurons, output_neuron, activation_f, activation_f_derivative, innovations)
+    return NeuralNetwork(neurons, input_neurons, output_neuron, activation_f, activation_f_derivative, innovations, _id)
 
 
 def get_activation_f_and_f_d_by_name(activation_f_name):
@@ -143,11 +143,6 @@ def read_network_from_file(filename, activation_f, activation_f_derivative):
 def read_network_from_file_f_name(filename, activation_f_name):
     activation_f, activation_f_d = get_activation_f_and_f_d_by_name(activation_f_name)
     return read_network_from_file(filename, activation_f, activation_f_d)
-
-
-def initialize_start_network(n_inputs, activation='tanh'):
-    activation_f, activation_f_d = get_activation_f_and_f_d_by_name(activation)
-    return initialize_network(n_inputs, activation_f, activation_f_d)
 
 
 def scale_data(y_train, y_test):
