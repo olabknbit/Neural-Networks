@@ -141,6 +141,7 @@ def read_network_from_file(filename, activation_f, activation_f_derivative):
 
 
 def read_network_from_file_nnr_new(filename, activation_f=_tanh, activation_f_derivative=tanh_derivative):
+    # TODO write and read also network's innovations
     from nnr_new import Neuron, NeuralNetwork
 
     def get_neuron(d):
