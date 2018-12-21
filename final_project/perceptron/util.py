@@ -229,7 +229,7 @@ def plot_regression_data(X_train, y_train, X_test, y_test, y_predicted, y_sklear
 
     plt.title(title)
     plt.legend()
-    plt.savefig(savefig_filename + '-data.png')
+    plt.savefig(savefig_filename)
 
 
 def shuffle(X_train, y_train):
