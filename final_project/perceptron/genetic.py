@@ -1,4 +1,5 @@
 import random
+
 from nnr_new import Innovation
 
 INNOVATION_NUMBER = 0

@@ -110,7 +110,8 @@ class NeuralNetwork():
         return [layer.get_neurons() for layer in self.layers[1:]]
 
     def get_weights(self):
-        return [str({'neurons': str(layer.neurons), 'bias_weights': str(layer.bias_weights)}) for layer in self.layers[1:]]
+        return [str({'neurons': str(layer.neurons), 'bias_weights': str(layer.bias_weights)}) for layer in
+                self.layers[1:]]
 
     def predict(self, row):
         return self.forward_propagate(row)
