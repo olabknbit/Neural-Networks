@@ -69,8 +69,6 @@ def read_network_layers_from_file_regression(filename):
     """
     with open(filename, 'r') as file:
         rows = file.readlines()
-        # layers = [print(neurons, bias_weights) for layer in rows:for neurons, bias_weights in eval(layer)]
-
         layers = []
         for row in rows:
             layer = eval(row)
@@ -99,26 +97,27 @@ def initialize_network(n_inputs, activation_f, activation_f_derivative, _id=0):
     from nnr_new import NeuralNetwork, Neuron, Innovation
     from numpy import random
     id = 0
-    neurons = []
+    neurons = {}
     input_neurons = []
     in_ns = {}
     for _ in range(n_inputs):
         neuron = Neuron(id, level=0, in_ns={}, out_ns=[], bias_weight=0, activation_f=activation_f,
                         activation_f_derivative=activation_f_derivative)
-        neurons.append(neuron)
-        input_neurons.append(neuron)
-        in_ns[neuron] = random.random() * 0.3
+        neurons[neuron.id] = neuron
+        input_neurons.append(neuron.id)
+        in_ns[neuron.id] = random.random() * 0.3
         id += 1
 
     innovations = []
     output_neuron = Neuron(id, 1, in_ns, [], 0.3, activation_f, activation_f_derivative)
-    for index, in_n in enumerate(input_neurons):
-        in_n.out_ns.append(output_neuron)
-        innovations.append(Innovation(source=in_n, end=output_neuron, innovation_number=index))
+    for index, in_n_id in enumerate(input_neurons):
+        in_n = neurons[in_n_id]
+        in_n.out_ns.append(output_neuron.id)
+        innovations.append(Innovation(source=in_n.id, end=output_neuron.id, innovation_number=index))
 
-    neurons.append(output_neuron)
+    neurons[output_neuron.id] = output_neuron
 
-    return NeuralNetwork(neurons, input_neurons, output_neuron, activation_f, activation_f_derivative, innovations, _id)
+    return NeuralNetwork(neurons, input_neurons, output_neuron.id, activation_f, activation_f_derivative, innovations, _id)
 
 
 def get_activation_f_and_f_d_by_name(activation_f_name):
@@ -163,13 +162,9 @@ def read_network_from_file_nnr_new(filename, activation_f=_tanh, activation_f_de
         text = file.read()
         nn = eval(text)
         neurons = eval(nn['neurons'])
-        neurons = [get_neuron(eval(neuron)) for neuron in neurons]
-        for neuron in neurons:
-            neuron.in_ns = {get_neuron_by_id(neurons, n_in_id): n_in_weight for n_in_id, n_in_weight in
-                            neuron.in_ns.iteritems()}
+        neurons = {int(neuron_id): get_neuron(eval(neuron)) for neuron_id, neuron in neurons.iteritems()}
         input_neurons = eval(nn['input_neurons'])
-        input_neurons = [get_neuron_by_id(neurons, neuron_id) for neuron_id in input_neurons]
-        output_neuron = get_neuron_by_id(neurons, eval(nn['output_neuron'])['id'])
+        output_neuron = eval(nn['output_neuron'])['id']
         neural_network = NeuralNetwork(neurons, input_neurons, output_neuron, activation_f, activation_f_derivative)
 
     return neural_network
@@ -223,7 +218,7 @@ def get_split_dataset(train_filename, test_filename):
 
 
 def plot_regression_data(X_train, y_train, X_test, y_test, y_predicted, y_sklearn_predicted=None,
-                         savefig_filename=None):
+                         savefig_filename=None, title=''):
     if len(X_train[0]) != 1:
         print('Cannot plot because len(data) = %d > 1' % len(X_train[0]))
         return
@@ -239,5 +234,6 @@ def plot_regression_data(X_train, y_train, X_test, y_test, y_predicted, y_sklear
     if y_sklearn_predicted is not None:
         plt.plot(X_test, y_sklearn_predicted, marker, c='purple', label='sklearn_predicted')
 
+    plt.title(title)
     plt.legend()
     plt.savefig(savefig_filename)

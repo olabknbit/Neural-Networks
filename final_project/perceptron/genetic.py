@@ -8,14 +8,17 @@ INNOVATION_NUMBER = 0
 def validate(network):
     neurons = network.neurons
 
-    for neuron in neurons:
-        for neuron_in in neuron.in_ns:
-            if neuron not in neuron_in.out_ns:
+    for neuron_id, neuron in neurons.iteritems():
+        for neuron_in_id in neuron.in_ns:
+            neuron_in = neurons[neuron_in_id]
+            if neuron_id not in neuron_in.out_ns:
                 print(network.to_str())
                 print("BIG BAD ERROR type 1")
                 exit(1)
-        for neuron_out in neuron.out_ns:
-            if neuron not in neuron_out.in_ns:
+        for neuron_out_id in neuron.out_ns:
+            neuron_out = neurons[neuron_out_id]
+            if neuron_id not in neuron_out.in_ns:
+                print(neuron_id, 'not in', neuron_out.in_ns)
                 print(network.to_str())
                 print("BIG BAD ERROR type 2")
 
@@ -24,9 +27,9 @@ def validate(network):
 
 
 def add_link(network, neuron1, neuron2, weight, innovation_number):
-    neuron2.in_ns[neuron1] = weight
-    neuron1.out_ns.append(neuron2)
-    network.innovations.append(Innovation(neuron1, neuron2, innovation_number=innovation_number))
+    neuron2.in_ns[neuron1.id] = weight
+    neuron1.out_ns.append(neuron2.id)
+    network.innovations.append(Innovation(neuron1.id, neuron2.id, innovation_number=innovation_number))
 
 
 def randomly_mutate(network, activation_f, activation_f_d):
@@ -38,7 +41,7 @@ def randomly_mutate(network, activation_f, activation_f_d):
 
     if random.random() < prob_add_link:
         def already_have_link(neuron1, neuron2):
-            return neuron1 in neuron2.in_ns or neuron2 in neuron1.in_ns
+            return neuron1.id in neuron2.in_ns or neuron2.id in neuron1.in_ns
 
         def get_two_neurons(neurons):
             import itertools
@@ -51,15 +54,13 @@ def randomly_mutate(network, activation_f, activation_f_d):
                        and not already_have_link(neuron1, neuron2)
 
             for comb_index in perm:
-                neuron1, neuron2 = combs[comb_index]
+                neuron1_id, neuron2_id = combs[comb_index]
+                neuron1, neuron2 = network.neurons[neuron1_id], network.neurons[neuron2_id]
                 if approve(neuron1, neuron2):
-                    break
-
-            if approve(neuron1, neuron2):
-                if neuron1.level > neuron2.level:
-                    return neuron2, neuron1
-                else:
-                    return neuron1, neuron2
+                    if neuron1.level > neuron2.level:
+                        return neuron2, neuron1
+                    else:
+                        return neuron1, neuron2
             return None
 
         nns = get_two_neurons(neurons)
@@ -69,46 +70,50 @@ def randomly_mutate(network, activation_f, activation_f_d):
             INNOVATION_NUMBER += 1
 
     if random.random() < prob_add_neuron:
-        neuron1 = neurons[random.randint(1, n_neurons - 1)]
-        select_neurons = neuron1.out_ns + neuron1.in_ns.keys()
-        if len(select_neurons) == 1:
-            neuron2 = select_neurons[0]
+        neuron1_id = neurons.keys()[random.randint(1, n_neurons - 1)]
+        neuron1 = neurons[neuron1_id]
+        select_neuron_ids = neuron1.out_ns + neuron1.in_ns.keys()
+        if len(select_neuron_ids) == 1:
+            neuron2_id = select_neuron_ids[0]
         else:
-            neuron2 = select_neurons[random.randint(1, len(select_neurons) - 1)]
+            neuron2_id = select_neuron_ids[random.randint(1, len(select_neuron_ids) - 1)]
 
-        if neuron2 not in neuron1.out_ns:
+        neuron2 = neurons[neuron2_id]
+        if neuron2.id not in neuron1.out_ns:
             tmp = neuron1
             neuron1 = neuron2
             neuron2 = tmp
         from nnr_new import Neuron
-        new_in_ns = {neuron1: 1}
-        new_out_ns = [neuron2]
-        neuron1.out_ns.remove(neuron2)
+        new_in_ns = {neuron1.id: 1.0}
+        new_out_ns = [neuron2.id]
+        neuron1.out_ns.remove(neuron2.id)
 
         if neuron2.level - neuron1.level > 1:
             level = int((neuron2.level - neuron1.level) / 2)
         else:
             level = neuron2.level
-            for neuron in neurons:
+            for neuron_id, neuron in neurons.iteritems():
                 if neuron.level >= level:
                     neuron.level += 1
 
-        weight = neuron2.in_ns.pop(neuron1)
+        weight = neuron2.in_ns.pop(neuron1.id)
         new_neuron = Neuron(len(neurons) + 1, level, new_in_ns, new_out_ns, 0.3, activation_f, activation_f_d)
-        neuron1.out_ns.append(new_neuron)
-        neuron2.in_ns[new_neuron] = weight
-        neurons.append(new_neuron)
+        neuron1.out_ns.append(new_neuron.id)
+        neuron2.in_ns[new_neuron.id] = weight
+        neurons[new_neuron.id] = new_neuron
 
         def get_innovation_index():
             for index, inn in enumerate(network.innovations):
-                if inn.source.id == neuron1.id and inn.end.id == neuron2.id:
+                source = neurons[inn.source]
+                end = neurons[inn.end]
+                if source.id == neuron1.id and end.id == neuron2.id:
                     return index
 
         innovation_index = get_innovation_index()
         network.innovations[innovation_index].disabled = True
-        network.innovations.append(Innovation(new_neuron, neuron2, INNOVATION_NUMBER))
+        network.innovations.append(Innovation(new_neuron.id, neuron2.id, INNOVATION_NUMBER))
         INNOVATION_NUMBER += 1
-        network.innovations.append(Innovation(neuron1, new_neuron, INNOVATION_NUMBER + 1))
+        network.innovations.append(Innovation(neuron1.id, new_neuron.id, INNOVATION_NUMBER + 1))
         INNOVATION_NUMBER += 1
         validate(network)
     return network
@@ -146,7 +151,7 @@ def calculate_compatibility(net1, net2):
     return c1 * E / N + c2 * D / N + c3 * W
 
 
-def main(train_filename, test_filename, n_networks=10, n_generations=100):
+def main(train_filename, test_filename, n_networks=10, n_generations=30):
     activation = 'tanh'
     from util import get_activation_f_and_f_d_by_name, initialize_network, get_split_dataset
     from nnr_new import score, clone
@@ -173,10 +178,11 @@ def main(train_filename, test_filename, n_networks=10, n_generations=100):
 
         print('Score networks')
         for i, n in enumerate(networks):
+            dir = 'tmp/'
             base_name = str(n.id) + '-' + str(gen)
-            savefig_filename = base_name + '.png'
-            score(n, X_train, y_train, X_test, y_test, n_iter=10000, savefig_filename=savefig_filename)
-            save_nn_filename = str(n.score) + '-' + base_name
+            savefig_filename = dir + base_name + '.png'
+            score(n, X_train, y_train, X_test, y_test, n_iter=101, savefig_filename=savefig_filename)
+            save_nn_filename = dir + base_name + '-' + str(n.score)
             from util import write_network_to_file_regression
             write_network_to_file_regression(save_nn_filename, n)
 
