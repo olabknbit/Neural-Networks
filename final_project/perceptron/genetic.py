@@ -1,39 +1,45 @@
+import random
+from nnr_new import Innovation
+
 INNOVATION_NUMBER = 0
 
 
-def validate(net):
-    neurons = net.neurons
+def validate(network):
+    neurons = network.neurons
 
     for neuron in neurons:
         for neuron_in in neuron.in_ns:
             if neuron not in neuron_in.out_ns:
-                print(net.to_str())
+                print(network.to_str())
                 print("BIG BAD ERROR type 1")
                 exit(1)
         for neuron_out in neuron.out_ns:
             if neuron not in neuron_out.in_ns:
-                print(net.to_str())
+                print(network.to_str())
                 print("BIG BAD ERROR type 2")
 
                 exit(1)
     return True
 
 
-def randomly_mutate(net, activation_f, activation_f_d):
+def add_link(network, neuron1, neuron2, weight, innovation_number):
+    neuron2.in_ns[neuron1] = weight
+    neuron1.out_ns.append(neuron2)
+    network.innovations.append(Innovation(neuron1, neuron2, innovation_number=innovation_number))
+
+
+def randomly_mutate(network, activation_f, activation_f_d):
     global INNOVATION_NUMBER
-    import random
-    from nnr_new import Innovation
     prob_add_link = 0.5
     prob_add_neuron = 0.3
-    neurons = net.neurons
+    neurons = network.neurons
     n_neurons = len(neurons)
 
     if random.random() < prob_add_link:
-
         def already_have_link(neuron1, neuron2):
             return neuron1 in neuron2.in_ns or neuron2 in neuron1.in_ns
 
-        def get_two_neurons():
+        def get_two_neurons(neurons):
             import itertools
             combs = list(itertools.combinations(neurons, 2))
             perm = range(len(combs))
@@ -55,12 +61,10 @@ def randomly_mutate(net, activation_f, activation_f_d):
                     return neuron1, neuron2
             return None
 
-        nns = get_two_neurons()
+        nns = get_two_neurons(neurons)
         if nns is not None:
             neuron1, neuron2 = nns
-            neuron2.in_ns[neuron1] = random.random() * 0.3
-            neuron1.out_ns.append(neuron2)
-            net.innovations.append(Innovation(neuron1, neuron2, innovation_number=INNOVATION_NUMBER))
+            add_link(network, neuron1, neuron2, weight=random.random() * 0.3, innovation_number=INNOVATION_NUMBER)
             INNOVATION_NUMBER += 1
 
     if random.random() < prob_add_neuron:
@@ -95,18 +99,18 @@ def randomly_mutate(net, activation_f, activation_f_d):
         neurons.append(new_neuron)
 
         def get_innovation_index():
-            for index, inn in enumerate(net.innovations):
+            for index, inn in enumerate(network.innovations):
                 if inn.source.id == neuron1.id and inn.end.id == neuron2.id:
                     return index
 
         innovation_index = get_innovation_index()
-        net.innovations[innovation_index].disabled = True
-        net.innovations.append(Innovation(new_neuron, neuron2, INNOVATION_NUMBER))
+        network.innovations[innovation_index].disabled = True
+        network.innovations.append(Innovation(new_neuron, neuron2, INNOVATION_NUMBER))
         INNOVATION_NUMBER += 1
-        net.innovations.append(Innovation(neuron1, new_neuron, INNOVATION_NUMBER + 1))
+        network.innovations.append(Innovation(neuron1, new_neuron, INNOVATION_NUMBER + 1))
         INNOVATION_NUMBER += 1
-        validate(net)
-    return net
+        validate(network)
+    return network
 
 
 def calculate_compatibility(net1, net2):
@@ -141,7 +145,7 @@ def calculate_compatibility(net1, net2):
     return c1 * E / N + c2 * D / N + c3 * W
 
 
-def main(train_filename, test_filename, get_nn_filenames_f, n_networks=10, n_generations=5):
+def main(train_filename, test_filename, n_networks=10, n_generations=100):
     activation = 'tanh'
     from util import get_activation_f_and_f_d_by_name, initialize_network, get_split_dataset
     from nnr_new import score, clone
@@ -152,7 +156,7 @@ def main(train_filename, test_filename, get_nn_filenames_f, n_networks=10, n_gen
     activation_f, activation_f_d = get_activation_f_and_f_d_by_name(activation)
     networks = [initialize_network(n_inputs, activation_f=activation_f, activation_f_derivative=activation_f_d, _id=id)
                 for id in range(n_networks)]
-    networks = [randomly_mutate(net, activation_f, activation_f_d) for net in networks]
+    networks = [randomly_mutate(network, activation_f, activation_f_d) for network in networks]
     network_id = n_networks
 
     print("Initialized %d networks:" % n_networks)
@@ -170,7 +174,7 @@ def main(train_filename, test_filename, get_nn_filenames_f, n_networks=10, n_gen
         for i, n in enumerate(networks):
             base_name = str(n.id) + '-' + str(gen)
             savefig_filename = base_name + '.png'
-            score(n, X_train, y_train, X_test, y_test, n_iter=100, savefig_filename=savefig_filename)
+            score(n, X_train, y_train, X_test, y_test, n_iter=10000, savefig_filename=savefig_filename)
             save_nn_filename = str(n.score) + '-' + base_name
             from util import write_network_to_file_regression
             write_network_to_file_regression(save_nn_filename, n)
@@ -180,8 +184,8 @@ def main(train_filename, test_filename, get_nn_filenames_f, n_networks=10, n_gen
         print('Mutate networks:\n\tKeep 20% of the best unchanged,\n\tLose 20% of the worst,\n\tMutate rest.')
         n_keep = int(len(networks) * 0.2)
         best_nets = clone(networks[:n_keep])
-        mutated_nets = [randomly_mutate(net, activation_f, activation_f_d) for net in networks[:-n_keep]]
-        for net in mutated_nets:
-            net.id = network_id
+        mutated_nets = [randomly_mutate(network, activation_f, activation_f_d) for network in networks[:-n_keep]]
+        for network in mutated_nets:
+            network.id = network_id
             network_id += 1
         networks = best_nets + mutated_nets
