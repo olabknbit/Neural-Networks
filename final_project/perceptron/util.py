@@ -153,11 +153,6 @@ def read_network_from_file_nnr_new(filename, activation_f=_tanh, activation_f_de
         level = d['level']
         return Neuron(id, level, in_ns, out_ns, bias_weight, activation_f, activation_f_derivative)
 
-    def get_neuron_by_id(neurons, neuron_id):
-        for neuron in neurons:
-            if neuron.id == neuron_id:
-                return neuron
-
     with open(filename, 'r') as file:
         text = file.read()
         nn = eval(text)
