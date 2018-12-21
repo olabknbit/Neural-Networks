@@ -475,7 +475,7 @@ class NEAT:
                 dir = 'tmp/'
                 base_name = str(network.id)
                 savefig_filename = dir + base_name + '.png'
-                from nnr_new import score
+p                from nnr_new import score
                 fitness = score(network, self.X_train, self.y_train, self.X_test, self.y_test, n_iter=101,
                                 savefig_filename=savefig_filename)
                 print(savefig_filename, network.score)

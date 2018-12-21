@@ -153,12 +153,13 @@ class NeuralNetwork:
             self.set_delta(input_neuron)
 
     def update_weights_neuron(self, l_rate, neuron):
+        if neuron.delta is None:
+            # neuron.delta can be None if neuron has no outputs (in_ns is empty).
+            return
         for in_neuron_id, in_neuron_weight in neuron.in_ns.iteritems():
             in_neuron = self.neurons[in_neuron_id]
             neuron.in_ns[in_neuron_id] += l_rate * neuron.delta * self.get_output(in_neuron)
-        if neuron.delta is not None:
-            # neuron.delta can be None if neuron has no outputs (in_ns is empty).
-            neuron.bias_weight += l_rate * neuron.delta
+        neuron.bias_weight += l_rate * neuron.delta
 
     def update_weights(self, l_rate):
         for input_neuron_id in self.neurons:
@@ -200,12 +201,21 @@ class NeuralNetwork:
         self.score = error / len(X_test)
         return self.score, predicted_outputs
 
-    def train(self, X_train, y_train, n_iter, l_rate=0.001, visualize_every=None):
+    def train(self, X_train, y_train, n_iter, l_rate=0.001, minibatch_size=5, visualize_every=None):
         import numpy as np
         last_error = - np.infty
         for epoch in range(n_iter):
+            from util import shuffle
+            X_train, y_train = shuffle(X_train, y_train)
+            # for i in range(0, len(X_train), minibatch_size):
+            # Get pair of (X, y) of the current minibatch/chunk
+            X_train_mini = X_train[:minibatch_size]
+            y_train_mini = y_train[:minibatch_size]
+
             iter_error = 0.0
-            for row, expected in zip(X_train, y_train)[:5]:
+            for row, expected in zip(X_train_mini, y_train_mini):
+                # The net should only predict the class based on the features,
+                # so the last cell which represents the class is not passed forward.
                 output = self.forward_propagate(row)
 
                 iter_error += np.sqrt((expected - output) ** 2)
@@ -222,7 +232,6 @@ class NeuralNetwork:
                 if abs(last_error - iter_error) < 0.001:
                     break
                 last_error = iter_error
-
                 # TODO use moment
 
     def get_innovation_or_none(self, innovation_index):
