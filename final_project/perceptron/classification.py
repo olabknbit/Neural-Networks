@@ -1,3 +1,12 @@
+# Activation function - for weights and inputs returns their dot product.
+def activate(weights, inputs):
+    # Add bias.
+    activation = weights[-1]
+    for weight, input in zip(weights[:-1], inputs):
+        activation += weight * input
+    return activation
+
+
 def get_random_neurons(n_inputs, n_neurons):
     from numpy import random
     # random numbers from range [0; 0.3) are proven to be best
@@ -13,7 +22,6 @@ class NeuronLayer:
 
     # Calculate what are the outputs of the layer for the given inputs.
     def forward_propagate(self, inputs, activation_f):
-        from util import activate
         outputs = []
         for neuron in self.neurons:
             activation = activate(neuron['weights'], inputs)
@@ -213,7 +221,7 @@ def initialize_network(neurons, n_inputs, outputs_classes, biases, activation_f,
 
 def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_epochs, visualize_every, l_rate, biases,
          activation_f, activation_f_derivative):
-    from util import write_network_to_file, read_network_layers_from_file
+    from util import write_network_to_file_classification, read_network_layers_from_file_classification
 
     neural_network = None
     outputs_classes = None
@@ -226,7 +234,7 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
             neural_network = initialize_network(create_nn, n_inputs, outputs_classes, biases, activation_f,
                                                 activation_f_derivative)
         else:
-            layers, outputs_classes = read_network_layers_from_file(read_nn)
+            layers, outputs_classes = read_network_layers_from_file_classification(read_nn)
             neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative,
                                            outputs_classes)
 
@@ -234,13 +242,13 @@ def main(train_filename, test_filename, create_nn, save_nn, read_nn, number_of_e
         neural_network.train(training_set_inputs, l_rate, number_of_epochs, visualize_every)
 
         if save_nn is not None:
-            write_network_to_file(save_nn, neural_network)
+            write_network_to_file_classification(save_nn, neural_network)
 
     if test_filename is not None:
         testing_set_inputs = read_file(test_filename)
 
         if neural_network is None:
-            layers, outputs_classes = read_network_layers_from_file(read_nn)
+            layers, outputs_classes = read_network_layers_from_file_classification(read_nn)
             neural_network = NeuralNetwork([NeuronLayer(l) for l in layers], activation_f, activation_f_derivative,
                                            outputs_classes)
 
