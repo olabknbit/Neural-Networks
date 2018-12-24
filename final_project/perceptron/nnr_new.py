@@ -13,6 +13,10 @@ def neurons_to_ids_str(n_list):
     return str([neuron_id for neuron_id in n_list])
 
 
+def neurons_to_str(n_dict):
+    return str({neuron_id: neuron.to_str() for neuron_id, neuron in n_dict.iteritems()})
+
+
 class Innovation:
     def __init__(self, source, end, innovation_number, disabled=False):
         assert type(source) is int

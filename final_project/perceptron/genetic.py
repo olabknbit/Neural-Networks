@@ -26,10 +26,40 @@ def validate(network):
     return True
 
 
-def add_link(network, neuron1, neuron2, weight, innovation_number):
+def add_link(neuron1, neuron2, weight):
     neuron2.in_ns[neuron1.id] = weight
     neuron1.out_ns.append(neuron2.id)
-    network.innovations.append(Innovation(neuron1.id, neuron2.id, innovation_number=innovation_number))
+
+
+def remove_link(neuron1, neuron2):
+    neuron2.in_ns.pop(neuron1.id)
+    neuron1.out_ns.remove(neuron2.id)
+
+
+def contains_cycle_util(neurons, node, visited, rec_stack):
+    visited.add(node.id)
+    rec_stack.add(node.id)
+    for neighbour_id in node.out_ns:
+
+        if neighbour_id not in visited:
+            neighbour = neurons[neighbour_id]
+            if contains_cycle_util(neurons, neighbour, visited, rec_stack):
+                return True
+        elif neighbour_id in rec_stack:
+            return True
+    rec_stack.remove(node.id)
+    return False
+
+
+def contains_cycle(network):
+    rec_stack = set()
+    visited = set()
+    for node_id in network.input_neurons:
+        if node_id not in visited:
+            node = network.neurons[node_id]
+            if contains_cycle_util(network.neurons, node, visited, rec_stack):
+                return True
+    return False
 
 
 def randomly_mutate(network, activation_f, activation_f_d):
@@ -43,31 +73,35 @@ def randomly_mutate(network, activation_f, activation_f_d):
         def already_have_link(neuron1, neuron2):
             return neuron1.id in neuron2.in_ns or neuron2.id in neuron1.in_ns
 
-        def get_two_neurons(neurons):
-            import itertools
-            combs = list(itertools.combinations(neurons, 2))
-            perm = range(len(combs))
-            random.shuffle(perm)
+        import itertools
+        combs = list(itertools.combinations(neurons, 2))
+        perm = range(len(combs))
+        random.shuffle(perm)
 
-            def approve(neuron1, neuron2):
-                return neuron1 is not None and neuron2 is not None and neuron1.level != neuron2.level \
-                       and not already_have_link(neuron1, neuron2)
+        def prem_approve(neuron1, neuron2):
+            return neuron1 is not None and neuron2 is not None and not already_have_link(neuron1, neuron2)
 
-            for comb_index in perm:
-                neuron1_id, neuron2_id = combs[comb_index]
-                neuron1, neuron2 = network.neurons[neuron1_id], network.neurons[neuron2_id]
-                if approve(neuron1, neuron2):
-                    if neuron1.level > neuron2.level:
-                        return neuron2, neuron1
+        for comb_index in perm:
+            neuron1_id, neuron2_id = combs[comb_index]
+            neuron1, neuron2 = network.neurons[neuron1_id], network.neurons[neuron2_id]
+            if prem_approve(neuron1, neuron2):
+
+                def try_adding_link(neuron1, neuron2):
+                    global INNOVATION_NUMBER
+                    add_link(neuron1, neuron2, weight=random.random() * 0.3)
+                    if not contains_cycle(network):
+                        network.innovations.append(
+                            Innovation(neuron1.id, neuron2.id, innovation_number=INNOVATION_NUMBER))
+                        INNOVATION_NUMBER += 1
+                        return True
                     else:
-                        return neuron1, neuron2
-            return None
+                        remove_link(neuron1, neuron2)
+                        return False
 
-        nns = get_two_neurons(neurons)
-        if nns is not None:
-            neuron1, neuron2 = nns
-            add_link(network, neuron1, neuron2, weight=random.random() * 0.3, innovation_number=INNOVATION_NUMBER)
-            INNOVATION_NUMBER += 1
+                if try_adding_link(neuron1, neuron2):
+                    break
+                elif try_adding_link(neuron2, neuron1):
+                    break
 
     if random.random() < prob_add_neuron:
         neuron1_id = neurons.keys()[random.randint(1, n_neurons - 1)]
