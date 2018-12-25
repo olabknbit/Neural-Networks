@@ -122,16 +122,8 @@ def randomly_mutate(network, activation_f, activation_f_d):
         new_out_ns = [neuron2.id]
         neuron1.out_ns.remove(neuron2.id)
 
-        if neuron2.level - neuron1.level > 1:
-            level = int((neuron2.level - neuron1.level) / 2)
-        else:
-            level = neuron2.level
-            for neuron_id, neuron in neurons.iteritems():
-                if neuron.level >= level:
-                    neuron.level += 1
-
         weight = neuron2.in_ns.pop(neuron1.id)
-        new_neuron = Neuron(len(neurons) + 1, level, new_in_ns, new_out_ns, 0.3, activation_f, activation_f_d)
+        new_neuron = Neuron(len(neurons) + 1, new_in_ns, new_out_ns, 0.3, activation_f, activation_f_d)
         neuron1.out_ns.append(new_neuron.id)
         neuron2.in_ns[new_neuron.id] = weight
         neurons[new_neuron.id] = new_neuron

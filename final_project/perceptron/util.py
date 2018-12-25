@@ -101,7 +101,7 @@ def initialize_network(n_inputs, activation_f, activation_f_derivative, _id=0):
     input_neurons = []
     in_ns = {}
     for _ in range(n_inputs):
-        neuron = Neuron(id, level=0, in_ns={}, out_ns=[], bias_weight=0, activation_f=activation_f,
+        neuron = Neuron(id, in_ns={}, out_ns=[], bias_weight=0, activation_f=activation_f,
                         activation_f_derivative=activation_f_derivative)
         neurons[neuron.id] = neuron
         input_neurons.append(neuron.id)
@@ -109,7 +109,7 @@ def initialize_network(n_inputs, activation_f, activation_f_derivative, _id=0):
         id += 1
 
     innovations = []
-    output_neuron = Neuron(id, 1, in_ns, [], 0.3, activation_f, activation_f_derivative)
+    output_neuron = Neuron(id, in_ns, [], 0.3, activation_f, activation_f_derivative)
     for index, in_n_id in enumerate(input_neurons):
         in_n = neurons[in_n_id]
         in_n.out_ns.append(output_neuron.id)
@@ -150,8 +150,7 @@ def read_network_from_file_nnr_new(filename, activation_f=_tanh, activation_f_de
         in_ns = eval(d['in_ns'])
         in_ns = {int(n_id): float(weight) for n_id, weight in in_ns.iteritems()}
         id = d['id']
-        level = d['level']
-        return Neuron(id, level, in_ns, out_ns, bias_weight, activation_f, activation_f_derivative)
+        return Neuron(id, in_ns, out_ns, bias_weight, activation_f, activation_f_derivative)
 
     with open(filename, 'r') as file:
         text = file.read()

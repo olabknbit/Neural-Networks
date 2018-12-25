@@ -29,9 +29,8 @@ class Innovation:
 
 
 class Neuron:
-    def __init__(self, id, level, in_ns, out_ns, bias_weight, activation_f, activation_f_derivative):
+    def __init__(self, id, in_ns, out_ns, bias_weight, activation_f, activation_f_derivative):
         assert type(id) is int
-        assert type(level) is int
         assert type(in_ns) is dict
         for key, value in in_ns.iteritems():
             assert type(key) is int
@@ -40,7 +39,6 @@ class Neuron:
         for neuron_id in out_ns:
             assert type(neuron_id) is int
         self.id = id
-        self.level = level
         self.in_ns = in_ns
         self.out_ns = out_ns
         self.bias_weight = bias_weight
@@ -56,7 +54,7 @@ class Neuron:
 
     def to_str(self):
         n = {'id': self.id, 'in_ns': in_ns_to_str(self.in_ns), 'out_ns': neurons_to_ids_str(self.out_ns),
-             'bias_weight': self.bias_weight, 'level': self.level}
+             'bias_weight': self.bias_weight}
         return str(n)
 
 
