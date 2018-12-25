@@ -215,6 +215,7 @@ def main(train_filename, test_filename, n_networks=10, n_generations=30):
             dir = 'tmp/'
             base_name = str(n.id) + '-' + str(gen)
             savefig_filename = dir + base_name + '.png'
+            print('gen', gen, 'scoring network id', n.id)
             score(n, X_train, y_train, X_test, y_test, n_iter=101, savefig_filename=savefig_filename)
             save_nn_filename = dir + base_name + '-' + str(n.score)
             from util import write_network_to_file_regression
