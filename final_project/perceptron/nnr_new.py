@@ -29,7 +29,7 @@ class Innovation:
 
 
 class Neuron:
-    def __init__(self, id, in_ns, out_ns, bias_weight, activation_f, activation_f_derivative):
+    def __init__(self, id, in_ns, out_ns, bias_weight):
         assert type(id) is int
         assert type(in_ns) is dict
         for key, value in in_ns.iteritems():
@@ -42,8 +42,6 @@ class Neuron:
         self.in_ns = in_ns
         self.out_ns = out_ns
         self.bias_weight = bias_weight
-        self.activation_f = activation_f
-        self.activation_f_derivative = activation_f_derivative
 
         self.output = None
         self.delta = None
@@ -97,7 +95,7 @@ class NeuralNetwork:
                 in_neuron = self.neurons[in_neuron_id]
                 inputs.append(self.get_output(in_neuron))
             activation = activate(weights, inputs, neuron.bias_weight)
-            neuron.output = neuron.activation_f(activation)
+            neuron.output = self.activation_f(activation)
 
         return neuron.output
 
@@ -116,7 +114,7 @@ class NeuralNetwork:
             weight = out_n.in_ns[neuron.id]
             delta = self.get_delta(out_n)
             error += (weight * delta)
-        neuron.delta = error * neuron.activation_f_derivative(neuron.output)
+        neuron.delta = error * self.activation_f_derivative(neuron.output)
 
     def get_delta(self, neuron):
         if neuron.delta is None:

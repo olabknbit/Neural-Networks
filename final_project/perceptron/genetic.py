@@ -123,7 +123,7 @@ def randomly_mutate(network, activation_f, activation_f_d):
         neuron1.out_ns.remove(neuron2.id)
 
         weight = neuron2.in_ns.pop(neuron1.id)
-        new_neuron = Neuron(len(neurons) + 1, new_in_ns, new_out_ns, 0.3, activation_f, activation_f_d)
+        new_neuron = Neuron(len(neurons) + 1, new_in_ns, new_out_ns, 0.3)
         neuron1.out_ns.append(new_neuron.id)
         neuron2.in_ns[new_neuron.id] = weight
         neurons[new_neuron.id] = new_neuron
