@@ -29,9 +29,8 @@ class Innovation:
 
 
 class Neuron:
-    def __init__(self, id, level, in_ns, out_ns, bias_weight, activation_f, activation_f_derivative):
+    def __init__(self, id, in_ns, out_ns, bias_weight=0.3):
         assert type(id) is int
-        assert type(level) is int
         assert type(in_ns) is dict
         for key, value in in_ns.iteritems():
             assert type(key) is int
@@ -40,12 +39,9 @@ class Neuron:
         for neuron_id in out_ns:
             assert type(neuron_id) is int
         self.id = id
-        self.level = level
         self.in_ns = in_ns
         self.out_ns = out_ns
         self.bias_weight = bias_weight
-        self.activation_f = activation_f
-        self.activation_f_derivative = activation_f_derivative
 
         self.output = None
         self.delta = None
@@ -56,7 +52,7 @@ class Neuron:
 
     def to_str(self):
         n = {'id': self.id, 'in_ns': in_ns_to_str(self.in_ns), 'out_ns': neurons_to_ids_str(self.out_ns),
-             'bias_weight': self.bias_weight, 'level': self.level}
+             'bias_weight': self.bias_weight}
         return str(n)
 
 
@@ -87,8 +83,10 @@ class NeuralNetwork:
     def print_input_neurons(self):
         return neurons_to_ids_str(self.input_neurons)
 
-    def get_innovation_weight(self, source, end):
-        return self.neurons[end.id].in_ns[source.id]
+    def get_innovation_weight(self, source_id, end_id):
+        if self.neurons.get(end_id) is None:
+            return None
+        return self.neurons[end_id].in_ns.get(source_id)
 
     def get_output(self, neuron):
         if neuron.output is None:
@@ -99,7 +97,7 @@ class NeuralNetwork:
                 in_neuron = self.neurons[in_neuron_id]
                 inputs.append(self.get_output(in_neuron))
             activation = activate(weights, inputs, neuron.bias_weight)
-            neuron.output = neuron.activation_f(activation)
+            neuron.output = self.activation_f(activation)
 
         return neuron.output
 
@@ -118,7 +116,7 @@ class NeuralNetwork:
             weight = out_n.in_ns[neuron.id]
             delta = self.get_delta(out_n)
             error += (weight * delta)
-        neuron.delta = error * neuron.activation_f_derivative(neuron.output)
+        neuron.delta = error * self.activation_f_derivative(neuron.output)
 
     def get_delta(self, neuron):
         if neuron.delta is None:
@@ -216,7 +214,8 @@ def score(network, X_train, y_train, X_test, y_test, n_iter, savefig_filename=No
     score, y_predicted = network.test(X_test, y_test)
     if savefig_filename is not None:
         from util import plot_regression_data
-        plot_regression_data(X_train, y_train, X_test, y_test, y_predicted, savefig_filename=savefig_filename, title=score)
+        plot_regression_data(X_train, y_train, X_test, y_test, y_predicted, savefig_filename=savefig_filename,
+                             title=score)
     return network.score
 
 
