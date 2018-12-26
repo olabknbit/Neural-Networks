@@ -29,7 +29,7 @@ class Innovation:
 
 
 class Neuron:
-    def __init__(self, id, in_ns, out_ns, bias_weight):
+    def __init__(self, id, in_ns, out_ns, bias_weight=0.3):
         assert type(id) is int
         assert type(in_ns) is dict
         for key, value in in_ns.iteritems():
@@ -83,8 +83,10 @@ class NeuralNetwork:
     def print_input_neurons(self):
         return neurons_to_ids_str(self.input_neurons)
 
-    def get_innovation_weight(self, source, end):
-        return self.neurons[end.id].in_ns[source.id]
+    def get_innovation_weight(self, source_id, end_id):
+        if self.neurons.get(end_id) is None:
+            return None
+        return self.neurons[end_id].in_ns.get(source_id)
 
     def get_output(self, neuron):
         if neuron.output is None:
@@ -212,7 +214,8 @@ def score(network, X_train, y_train, X_test, y_test, n_iter, savefig_filename=No
     score, y_predicted = network.test(X_test, y_test)
     if savefig_filename is not None:
         from util import plot_regression_data
-        plot_regression_data(X_train, y_train, X_test, y_test, y_predicted, savefig_filename=savefig_filename, title=score)
+        plot_regression_data(X_train, y_train, X_test, y_test, y_predicted, savefig_filename=savefig_filename,
+                             title=score)
     return network.score
 
 
