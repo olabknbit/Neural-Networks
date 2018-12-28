@@ -214,11 +214,11 @@ class NeuralNetwork:
                 self.reset()
             if visualize_every is not None and epoch % visualize_every == 0:
                 import visualize
-                visualize.visualize_network(self, epoch)
+                visualize.simple_vis(self)
 
             if epoch % 100 == 0:
                 # print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, iter_error))
-                # Stop training if iter_error not changing.inf
+                # Stop training if iter_error not changing.
                 if abs(last_error - iter_error) < 0.001:
                     break
                 last_error = iter_error

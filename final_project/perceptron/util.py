@@ -101,7 +101,7 @@ def initialize_network(n_inputs, activation_f, activation_f_derivative, _id=0):
     input_neurons = []
     in_ns = {}
     for _ in range(n_inputs):
-        neuron = Neuron(id, in_ns={}, out_ns=[], bias_weight=0)
+        neuron = Neuron(id, in_ns={}, out_ns=[], bias_weight=0.3)
         neurons[neuron.id] = neuron
         input_neurons.append(neuron.id)
         in_ns[neuron.id] = random.random() * 0.3

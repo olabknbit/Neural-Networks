@@ -469,24 +469,21 @@ class NEAT:
         self.calculate_adjusted_fitness()
         self.survival_of_the_fittest()
 
-    def show_off(self):
-        for spec in self.species:
-            for network in spec.networks:
-                print(network.score)
-
     def save_networks(self):
         for spec in self.species:
             for network in spec.networks:
                 dir = 'tmp/'
                 base_name = str(network.id)
                 savefig_filename = dir + base_name + '.png'
-                print(savefig_filename)
                 from nnr_new import score
-                fitness = score(network, self.X_train, self.y_train, self.X_test, self.y_test, n_iter=101, savefig_filename=savefig_filename)
+                fitness = score(network, self.X_train, self.y_train, self.X_test, self.y_test, n_iter=101,
+                                savefig_filename=savefig_filename)
+                print(savefig_filename, network.score)
                 self.fitness[network.id] = fitness
                 save_nn_filename = dir + base_name + '-' + str(network.score)
                 from util import write_network_to_file_regression
                 write_network_to_file_regression(save_nn_filename, network)
+
 
 def create_random_network(train_filename, test_filename, activation='tanh'):
     from util import get_activation_f_and_f_d_by_name, initialize_network, get_split_dataset
@@ -513,5 +510,4 @@ def main(train_filename, test_filename, n_generations=10):
         neat.sanity_check()
 
     neat.final(n_generations + 1)
-    neat.show_off()
     neat.save_networks()
