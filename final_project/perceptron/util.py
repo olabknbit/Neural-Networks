@@ -116,7 +116,7 @@ def initialize_network(n_inputs, activation_f, activation_f_derivative, _id=0):
 
     neurons[output_neuron.id] = output_neuron
 
-    return NeuralNetwork(neurons, input_neurons, output_neuron.id, activation_f, activation_f_derivative, innovations, _id)
+    return NeuralNetwork(neurons, input_neurons, output_neuron.id, innovations=innovations, id=_id)
 
 
 def get_activation_f_and_f_d_by_name(activation_f_name):
@@ -158,7 +158,7 @@ def read_network_from_file_nnr_new(filename, activation_f=_tanh, activation_f_de
         neurons = {int(neuron_id): get_neuron(eval(neuron)) for neuron_id, neuron in neurons.iteritems()}
         input_neurons = eval(nn['input_neurons'])
         output_neuron = eval(nn['output_neuron'])['id']
-        neural_network = NeuralNetwork(neurons, input_neurons, output_neuron, activation_f, activation_f_derivative)
+        neural_network = NeuralNetwork(neurons, input_neurons, output_neuron)
 
     return neural_network
 
