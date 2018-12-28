@@ -59,7 +59,7 @@ def main():
     random.seed(123)
     routes_lines = 1
     routes_stops = 6
-    hours_n = 1000  # how many rows of train and test data to generate (split 60:40)
+    hours_n = 10000  # how many rows of train and test data to generate (split 60:40)
     hours_buses = [1]  # how many buses of each line should run
     trips_transfers = 0  # max how many transfers each passenger can have
     for trips_m in [1000]:  # how many passenger's trips there are
