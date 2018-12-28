@@ -27,6 +27,14 @@ class Innovation:
         self.innovation_number = innovation_number
         self.disabled = disabled
 
+    def to_str(self):
+        return {'source': str(self.source), 'end': str(self.end), 'innovation_number': str(self.innovation_number),
+                'disabled': str(self.disabled)}
+
+
+def innovation_of(old):
+    return Innovation(old.source, old.end, old.innovation_number, old.disabled)
+
 
 class Neuron:
     def __init__(self, id, in_ns, out_ns, bias_weight=0.3):
@@ -57,7 +65,7 @@ class Neuron:
 
 
 class NeuralNetwork:
-    def __init__(self, neurons, input_neurons, output_neuron, activation_f, activation_f_derivative,
+    def __init__(self, neurons, input_neurons, output_neuron, activation_f_name='tanh',
                  innovations=list(), id=0):
         """
         :param activation_f: lambda taking x : float and returning another float
@@ -73,12 +81,20 @@ class NeuralNetwork:
         self.neurons = neurons
         self.input_neurons = input_neurons
         self.output_neuron = output_neuron
-        self.activation_f = lambda x: activation_f(x)
-        self.activation_f_derivative = lambda x: activation_f_derivative(x)
+        self.activation_f_name = activation_f_name
+        # self.activation_f_derivative = activation_f_derivative
 
         self.score = None
         self.innovations = innovations
         self.id = id
+
+    def activation_f(self, x):
+        import numpy as np
+        return np.tanh(x) + 1
+
+    def activation_f_derivative(self, x):
+        import numpy as np
+        return 1.0 - np.tanh(x) ** 2
 
     def print_input_neurons(self):
         return neurons_to_ids_str(self.input_neurons)
@@ -140,7 +156,9 @@ class NeuralNetwork:
         for in_neuron_id, in_neuron_weight in neuron.in_ns.iteritems():
             in_neuron = self.neurons[in_neuron_id]
             neuron.in_ns[in_neuron_id] += l_rate * neuron.delta * self.get_output(in_neuron)
-        neuron.bias_weight += l_rate * neuron.delta
+        if neuron.delta is not None:
+            # neuron.delta can be None if neuron has no outputs (in_ns is empty).
+            neuron.bias_weight += l_rate * neuron.delta
 
     def update_weights(self, l_rate):
         for input_neuron_id in self.neurons:
@@ -159,9 +177,11 @@ class NeuralNetwork:
         def neurons_to_str(n_dict):
             return str({neuron_id: neuron.to_str() for neuron_id, neuron in n_dict.iteritems()})
 
-        net_s = {'neurons': neurons_to_str(self.neurons),
+        net_s = {'id': str(self.id),
+                 'neurons': neurons_to_str(self.neurons),
                  'input_neurons': neurons_to_ids_str(self.input_neurons),
                  'output_neuron': self.output_neuron,
+                 'innovations': str([innovation.to_str() for innovation in self.innovations])
                  }
         return str(net_s)
 
@@ -186,8 +206,6 @@ class NeuralNetwork:
         for epoch in range(n_iter):
             iter_error = 0.0
             for row, expected in zip(X_train, y_train):
-                # The net should only predict the class based on the features,
-                # so the last cell which represents the class is not passed forward.
                 output = self.forward_propagate(row)
 
                 iter_error += np.sqrt((expected - output) ** 2)
@@ -199,14 +217,21 @@ class NeuralNetwork:
                 visualize.visualize_network(self, epoch)
 
             if epoch % 100 == 0:
-                print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, iter_error))
-                # Stop training if iter_error not changing.
-                # TODO consider stochastic batches.
+                # print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, iter_error))
+                # Stop training if iter_error not changing.inf
                 if abs(last_error - iter_error) < 0.001:
                     break
                 last_error = iter_error
 
                 # TODO use moment
+
+    def get_innovation_or_none(self, innovation_index):
+        if innovation_index >= len(self.innovations):
+            return None
+        return self.innovations[innovation_index]
+
+    def equals(self, other):
+        return self.to_str() == other.to_str()
 
 
 def score(network, X_train, y_train, X_test, y_test, n_iter, savefig_filename=None):
