@@ -205,7 +205,7 @@ class NeuralNetwork:
         last_error = - np.infty
         for epoch in range(n_iter):
             iter_error = 0.0
-            for row, expected in zip(X_train, y_train):
+            for row, expected in zip(X_train, y_train)[:5]:
                 output = self.forward_propagate(row)
 
                 iter_error += np.sqrt((expected - output) ** 2)
