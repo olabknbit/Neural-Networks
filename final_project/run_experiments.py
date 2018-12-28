@@ -51,23 +51,21 @@ def main():
     parser = argparse.ArgumentParser(description='Neural Network framework.')
     parser.add_argument('-g', '--generate', action='store_true',
                         help='If specified new datafiles will be generated. Otherwise using existing files')
+    parser.add_argument('-s', '--save', action='store_true',
+                        help='If specified results will be saved to files')
 
     args = parser.parse_args()
     should_generate = args.generate
 
     import random
     random.seed(123)
-    routes_lines = 1
-    routes_stops = 6
-    hours_n = 10000  # how many rows of train and test data to generate (split 60:40)
-    hours_buses = [1]  # how many buses of each line should run
-    trips_transfers = 0  # max how many transfers each passenger can have
-    for trips_m in [1000]:  # how many passenger's trips there are
-        train_data_filename, test_data_filename = generate_data(routes_lines, routes_stops, hours_n, hours_buses,
-                                                                trips_m, trips_transfers, should_generate)
-        from perceptron import genetic
-
-        genetic.main(train_data_filename, test_data_filename)
+    import config
+    routes_lines, routes_stops, hours_n, hours_buses, trips_m, trips_transfers = config.get_filenames_params()
+    train_data_filename, test_data_filename = generate_data(routes_lines, routes_stops, hours_n, hours_buses,
+                                                            trips_m, trips_transfers, should_generate)
+    from perceptron import genetic
+    genetic.main(train_data_filename, test_data_filename, neat_params=config.get_neat_params(),
+                 n_generations=config.n_generations, train_params=config.get_train_params(), save=args.save)
 
 
 if __name__ == "__main__":

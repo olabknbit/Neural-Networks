@@ -52,11 +52,9 @@ class Neuron:
         self.bias_weight = bias_weight
 
         self.output = None
-        self.delta = None
 
-    def reset_output_and_delta(self):
+    def reset_output(self):
         self.output = None
-        self.delta = None
 
     def to_str(self):
         n = {'id': self.id, 'in_ns': in_ns_to_str(self.in_ns), 'out_ns': neurons_to_ids_str(self.out_ns),
@@ -82,11 +80,11 @@ class NeuralNetwork:
         self.input_neurons = input_neurons
         self.output_neuron = output_neuron
         self.activation_f_name = activation_f_name
-        # self.activation_f_derivative = activation_f_derivative
 
         self.score = None
         self.innovations = innovations
         self.id = id
+        self.deltas = {}
 
     def activation_f(self, x):
         import numpy as np
@@ -125,19 +123,20 @@ class NeuralNetwork:
         output_neuron = self.neurons[self.output_neuron]
         return self.get_output(output_neuron)
 
-    def set_delta(self, neuron):
+    def get_delta(self, neuron):
+        delta= self.deltas.get(neuron.id)
+        if delta is not None:
+            return delta
         error = 0.0
         for neuron_id in neuron.out_ns:
             out_n = self.neurons[neuron_id]
             weight = out_n.in_ns[neuron.id]
             delta = self.get_delta(out_n)
             error += (weight * delta)
-        neuron.delta = error * self.activation_f_derivative(neuron.output)
 
-    def get_delta(self, neuron):
-        if neuron.delta is None:
-            self.set_delta(neuron)
-        return neuron.delta
+        delta = error * self.activation_f_derivative(neuron.output)
+        self.deltas[neuron.id] = delta
+        return delta
 
     # Calculate 'delta' for every neuron. This will then be used to update the weights of the neurons.
     def backward_propagate(self, expected_val):
@@ -146,19 +145,21 @@ class NeuralNetwork:
         # so then we can update the weights.
         output_neuron = self.neurons[self.output_neuron]
         error = (expected_val - output_neuron.output)
-        output_neuron.delta = error * self.activation_f_derivative(output_neuron.output)
+        self.deltas[output_neuron.id] = error * self.activation_f_derivative(output_neuron.output)
 
         for input_neuron_id in self.input_neurons:
-            input_neuron = self.neurons[input_neuron_id]
-            self.set_delta(input_neuron)
+            if input_neuron_id not in self.deltas:
+                input_neuron = self.neurons[input_neuron_id]
+                self.deltas[input_neuron_id] = self.get_delta(input_neuron)
 
     def update_weights_neuron(self, l_rate, neuron):
+        delta = self.deltas.get(neuron.id)
+        if delta is None:
+            return
         for in_neuron_id, in_neuron_weight in neuron.in_ns.iteritems():
             in_neuron = self.neurons[in_neuron_id]
-            neuron.in_ns[in_neuron_id] += l_rate * neuron.delta * self.get_output(in_neuron)
-        if neuron.delta is not None:
-            # neuron.delta can be None if neuron has no outputs (in_ns is empty).
-            neuron.bias_weight += l_rate * neuron.delta
+            neuron.in_ns[in_neuron_id] += l_rate * delta * self.get_output(in_neuron)
+        neuron.bias_weight += l_rate * delta
 
     def update_weights(self, l_rate):
         for input_neuron_id in self.neurons:
@@ -167,7 +168,8 @@ class NeuralNetwork:
 
     def reset(self):
         for neuron in self.neurons.values():
-            neuron.reset_output_and_delta()
+            neuron.reset_output()
+        self.deltas = {}
 
     def to_str(self):
         """
@@ -200,12 +202,20 @@ class NeuralNetwork:
         self.score = error / len(X_test)
         return self.score, predicted_outputs
 
-    def train(self, X_train, y_train, n_iter, l_rate=0.001, visualize_every=None):
+    def train(self, X_train, y_train, n_iter, l_rate=0.001, minibatch_size=5, visualize_every=None):
         import numpy as np
         last_error = - np.infty
         for epoch in range(n_iter):
+            from util import shuffle
+            X_train, y_train = shuffle(X_train, y_train)
+
+            # for i in range(0, len(X_train), minibatch_size):
+            # Get pair of (X, y) of the current minibatch/chunk
+            X_train_mini = X_train[:minibatch_size]
+            y_train_mini = y_train[:minibatch_size]
+
             iter_error = 0.0
-            for row, expected in zip(X_train, y_train):
+            for row, expected in zip(X_train_mini, y_train_mini):
                 output = self.forward_propagate(row)
 
                 iter_error += np.sqrt((expected - output) ** 2)
@@ -222,7 +232,6 @@ class NeuralNetwork:
                 if abs(last_error - iter_error) < 0.001:
                     break
                 last_error = iter_error
-
                 # TODO use moment
 
     def get_innovation_or_none(self, innovation_index):
