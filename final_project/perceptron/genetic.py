@@ -3,33 +3,31 @@ import random
 from nnr_new import Innovation
 
 
-def validate(network):
+def validate(network, change=""):
     neurons = network.neurons
-    if len(network.innovations) == 0:
-        print("WTF 0 innovations")
+
+    def print_error_and_exit(error):
+        print(error)
+        print(change)
         print(network.to_str())
         exit(1)
 
+    if len(network.innovations) == 0:
+        print_error_and_exit("WTF 0 innovations")
+
     if len(neurons) == 0:
-        print("WTF 0 neurons")
-        print(network.to_str())
-        exit(1)
+        print_error_and_exit("WTF 0 neurons")
 
     for neuron_id, neuron in neurons.iteritems():
         for neuron_in_id in neuron.in_ns:
             neuron_in = neurons[neuron_in_id]
             if neuron_id not in neuron_in.out_ns:
-                print(network.to_str())
-                print("BIG BAD ERROR type 1")
-                exit(1)
+                print_error_and_exit("BIG BAD ERROR type 1")
+
         for neuron_out_id in neuron.out_ns:
             neuron_out = neurons[neuron_out_id]
             if neuron_id not in neuron_out.in_ns:
-                print(neuron_id, 'not in', neuron_out.in_ns)
-                print(network.to_str())
-                print("BIG BAD ERROR type 2")
-
-                exit(1)
+                print_error_and_exit("BIG BAD ERROR type 2:\n\t" + neuron_id + 'not in' + neuron_out.in_ns)
     return True
 
 
@@ -126,7 +124,9 @@ def randomly_add_neuron(network, neuron_id, neuron_source_id, neuron_end_id, inn
     network.innovations[innovation_index].disabled = True
     network.innovations.append(Innovation(new_neuron.id, neuron_end.id, innovation_number))
     network.innovations.append(Innovation(neuron_source.id, new_neuron.id, innovation_number + 1))
-    validate(network)
+    change = "Adding neuron %d between %d and %d. Innovation number %d. Network %s" \
+             % (neuron_id, neuron_source_id, neuron_end_id, innovation_number, network.to_str())
+    validate(network, change=change)
     return network, True
 
 
@@ -307,7 +307,7 @@ class NEAT:
         for spec in self.species:
             from nnr_new import score
             for network in spec.networks:
-                fitness = score(network, self.X_train, self.y_train, self.X_test, self.y_test, n_iter=101)
+                fitness = score(network, self.X_train, self.y_train, self.X_test, self.y_test, n_iter=10001)
                 self.fitness[network.id] = fitness
 
     def calculate_adjusted_fitness(self):
@@ -484,6 +484,11 @@ class NEAT:
                 from util import write_network_to_file_regression
                 write_network_to_file_regression(save_nn_filename, network)
 
+    def show_off(self):
+        for spec_id, spec in enumerate(self.species):
+            for network in spec.networks:
+                print('species:', spec_id, 'network id:', network.id, 'network_score:', network.score)
+
 
 def create_random_network(train_filename, test_filename, activation='tanh'):
     from util import get_activation_f_and_f_d_by_name, initialize_network, get_split_dataset
@@ -497,7 +502,7 @@ def create_random_network(train_filename, test_filename, activation='tanh'):
     return NEAT(network, number_of_neurons, innovation_number, (X_train, y_train, X_test, y_test))
 
 
-def main(train_filename, test_filename, n_generations=10):
+def main(train_filename, test_filename, n_generations=10, save=False):
     neat = create_random_network(train_filename, test_filename)
 
     for generation in range(0, n_generations):
@@ -509,5 +514,10 @@ def main(train_filename, test_filename, n_generations=10):
         neat.re_speciate()
         neat.sanity_check()
 
-    neat.final(n_generations + 1)
-    neat.save_networks()
+    generation = n_generations + 1
+    print("-FINAL GENERATION %d-" % generation)
+    neat.final(generation)
+    if save:
+        neat.save_networks()
+    else:
+        neat.show_off()
