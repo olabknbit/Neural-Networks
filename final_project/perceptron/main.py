@@ -40,7 +40,7 @@ def main():
     args = parser.parse_args()
 
     # Seed the random number generator
-    random.seed(args.seed)
+    #random.seed(args.seed)
 
     if args.create_nn is None and args.read_nn is None:
         print('Either \'--create_nn\' or \'--read_nn\' has to be provided.')

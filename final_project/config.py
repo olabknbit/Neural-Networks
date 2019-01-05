@@ -15,10 +15,10 @@ ADD_SYNAPSE_MUTATION_CHANCE = 0.5
 ADD_NEURON_MUTATION_CHANCE = 0.3
 
 # train params
-n_iter = 301
+n_iter = 100
 l_rate = 0.001
 
-n_generations = 10
+n_generations = 300
 
 
 def get_filenames_params():

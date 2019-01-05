@@ -78,7 +78,7 @@ def run_simulator(routes_filename, trips_filename, hours_filename):
 
         passenger_trips = []
         for trip in trips:
-            str_splt = map(str.strip, trip.split(','))
+            str_splt = list(map(str.strip, trip.split(',')))
 
             start_time = int(str_splt[0])
             first_stop = str_splt[1]
@@ -128,7 +128,7 @@ def main():
     args = parser.parse_args()
 
     # Seed the random number generator
-    random.seed(args.seed)
+    #random.seed(args.seed)
 
     run_simulator_with_args(args.routes_lines, args.routes_stops, args.trips_m, args.trips_transfers, args.hours_n,
                             args.hours_buses)

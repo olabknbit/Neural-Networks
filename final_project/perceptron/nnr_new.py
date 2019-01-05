@@ -6,7 +6,7 @@ def activate(weights, inputs, bias):
 
 
 def in_ns_to_str(n_dict):
-    return str({neuron_id: weight for neuron_id, weight in n_dict.iteritems()})
+    return str({neuron_id: weight for neuron_id, weight in n_dict.items()})
 
 
 def neurons_to_ids_str(n_list):
@@ -14,7 +14,7 @@ def neurons_to_ids_str(n_list):
 
 
 def neurons_to_str(n_dict):
-    return str({neuron_id: neuron.to_str() for neuron_id, neuron in n_dict.iteritems()})
+    return str({neuron_id: neuron.to_str() for neuron_id, neuron in n_dict.items()})
 
 
 class Innovation:
@@ -40,7 +40,7 @@ class Neuron:
     def __init__(self, id, in_ns, out_ns, bias_weight=0.3):
         assert type(id) is int
         assert type(in_ns) is dict
-        for key, value in in_ns.iteritems():
+        for key, value in in_ns.items():
             assert type(key) is int
             assert type(value) is float
         assert type(out_ns) is list
@@ -60,6 +60,10 @@ class Neuron:
         n = {'id': self.id, 'in_ns': in_ns_to_str(self.in_ns), 'out_ns': neurons_to_ids_str(self.out_ns),
              'bias_weight': self.bias_weight}
         return str(n)
+    def to_str2(self):
+        n = {'id': self.id, 'in_ns': in_ns_to_str(self.in_ns), 'out_ns': neurons_to_ids_str(self.out_ns),
+                'bias_weight': self.bias_weight, 'output': self.output}
+        return str(n)
 
 
 class NeuralNetwork:
@@ -70,7 +74,7 @@ class NeuralNetwork:
         :param activation_f_derivative: lambda derivative of activation_f, taking x : float and returning another float
         """
         assert type(neurons) is dict
-        for key, value in neurons.iteritems():
+        for key, value in neurons.items():
             assert type(key) is int
             assert isinstance(value, Neuron)
         for input_neuron in input_neurons:
@@ -106,7 +110,7 @@ class NeuralNetwork:
         if neuron.output is None:
             weights = []
             inputs = []
-            for in_neuron_id, in_neuron_weight in neuron.in_ns.iteritems():
+            for in_neuron_id, in_neuron_weight in neuron.in_ns.items():
                 weights.append(in_neuron_weight)
                 in_neuron = self.neurons[in_neuron_id]
                 inputs.append(self.get_output(in_neuron))
@@ -128,12 +132,20 @@ class NeuralNetwork:
         if delta is not None:
             return delta
         error = 0.0
+        # print("petla \n")
+
+        # print("neurion id "+str(neuron.id)+"\n")
+     
         for neuron_id in neuron.out_ns:
+            # print("out_ns neuronsid"+str(neuron_id)+"\n")
             out_n = self.neurons[neuron_id]
+            # print("out_n "+str(out_n.id)+"\n")
             weight = out_n.in_ns[neuron.id]
             delta = self.get_delta(out_n)
             error += (weight * delta)
-
+        delta = 0
+        # if(neuron.output is not None):
+        print(neuron.to_str2())
         delta = error * self.activation_f_derivative(neuron.output)
         self.deltas[neuron.id] = delta
         return delta
@@ -143,20 +155,24 @@ class NeuralNetwork:
         # Update last layer's (output layer's) 'delta' field.
         # This field is needed to calculate 'delta' fields in previous (closer to input layer) layers,
         # so then we can update the weights.
+        print("\n")
+        print("network = " + self.to_str())
+
         output_neuron = self.neurons[self.output_neuron]
         error = (expected_val - output_neuron.output)
         self.deltas[output_neuron.id] = error * self.activation_f_derivative(output_neuron.output)
-
         for input_neuron_id in self.input_neurons:
             if input_neuron_id not in self.deltas:
                 input_neuron = self.neurons[input_neuron_id]
+                print("\n")
+                print("id = " + str(self.id) + "    " + str(input_neuron_id))
                 self.deltas[input_neuron_id] = self.get_delta(input_neuron)
 
     def update_weights_neuron(self, l_rate, neuron):
         delta = self.deltas.get(neuron.id)
         if delta is None:
             return
-        for in_neuron_id, in_neuron_weight in neuron.in_ns.iteritems():
+        for in_neuron_id, in_neuron_weight in neuron.in_ns.items():
             in_neuron = self.neurons[in_neuron_id]
             neuron.in_ns[in_neuron_id] += l_rate * delta * self.get_output(in_neuron)
         neuron.bias_weight += l_rate * delta
@@ -177,7 +193,7 @@ class NeuralNetwork:
         """
 
         def neurons_to_str(n_dict):
-            return str({neuron_id: neuron.to_str() for neuron_id, neuron in n_dict.iteritems()})
+            return str({neuron_id: neuron.to_str() for neuron_id, neuron in n_dict.items()})
 
         net_s = {'id': str(self.id),
                  'neurons': neurons_to_str(self.neurons),
@@ -206,7 +222,7 @@ class NeuralNetwork:
         import numpy as np
         last_error = - np.infty
         for epoch in range(n_iter):
-            from util import shuffle
+            from perceptron.util import shuffle
             X_train, y_train = shuffle(X_train, y_train)
 
             # for i in range(0, len(X_train), minibatch_size):
@@ -215,15 +231,18 @@ class NeuralNetwork:
             y_train_mini = y_train[:minibatch_size]
 
             iter_error = 0.0
+            i = 0
             for row, expected in zip(X_train_mini, y_train_mini):
                 output = self.forward_propagate(row)
 
-                iter_error += np.sqrt((expected - output) ** 2)
+                iter_error += np.sqrt((expected - output) ** 2) 
+                # print(str(epoch) + " " + str(i))
+                i = i+1
                 self.backward_propagate(expected)
                 self.update_weights(l_rate)
                 self.reset()
             if visualize_every is not None and epoch % visualize_every == 0:
-                import visualize
+                import perceptron.visualize
                 visualize.simple_vis(self)
 
             if epoch % 100 == 0:
@@ -247,7 +266,7 @@ def score(network, X_train, y_train, X_test, y_test, n_iter, savefig_filename=No
     network.train(X_train, y_train, n_iter)
     score, y_predicted = network.test(X_test, y_test)
     if savefig_filename is not None:
-        from util import plot_regression_data
+        from perceptron.util import plot_regression_data
         plot_regression_data(X_train, y_train, X_test, y_test, y_predicted, savefig_filename=savefig_filename,
                              title=score)
     return network.score

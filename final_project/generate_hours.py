@@ -28,7 +28,7 @@ def main():
     args = parser.parse_args()
 
     # Seed the random number generator
-    random.seed(args.seed)
+    #random.seed(args.seed)
 
     generate_hours(args.buses, args.n)
 

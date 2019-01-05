@@ -94,8 +94,8 @@ def get_random_neurons(n_inputs, n_neurons):
 
 
 def initialize_network(n_inputs, activation_f, activation_f_derivative, _id=0):
-    from nnr_new import NeuralNetwork, Neuron, Innovation
-    from numpy import random
+    from perceptron.nnr_new import NeuralNetwork, Neuron, Innovation
+    import random
     id = 0
     neurons = {}
     input_neurons = []
@@ -131,7 +131,7 @@ def get_activation_f_and_f_d_by_name(activation_f_name):
 
 
 def read_network_from_file(filename, activation_f, activation_f_derivative):
-    from neural_network_regression import NeuronLayer, NeuralNetwork
+    from perceptron.neural_network_regression import NeuronLayer, NeuralNetwork
     layers = read_network_layers_from_file_regression(filename)
     neural_network = NeuralNetwork([NeuronLayer(neurons, bias_weights) for neurons, bias_weights in layers],
                                    activation_f, activation_f_derivative)
@@ -140,7 +140,7 @@ def read_network_from_file(filename, activation_f, activation_f_derivative):
 
 def read_network_from_file_nnr_new(filename, activation_f=_tanh, activation_f_derivative=tanh_derivative):
     # TODO write and read also network's innovations
-    from nnr_new import Neuron, NeuralNetwork
+    from perceptron.nnr_new import Neuron, NeuralNetwork
 
     def get_neuron(d):
         out_ns = eval(d['out_ns'])
@@ -234,7 +234,29 @@ def plot_regression_data(X_train, y_train, X_test, y_test, y_predicted, y_sklear
 
 def shuffle(X_train, y_train):
     import random
-    zipped = zip(X_train, y_train)
+    zipped = list(zip(X_train, y_train))
     random.shuffle(zipped)
     X_train, y_train = zip(*zipped)
     return X_train, y_train
+
+# def visualize_result(results, savefig_filename):
+#     import matplotlib.pyplot as plt
+#     marker = 'x'
+#     plt.clf()
+#     print(results)
+#     plt.plot(results, marker, c='red')
+#     plt.savefig(savefig_filename)
+#     plt.show()
+
+def visualize_result(results, savefig_filename):
+    import matplotlib.pyplot as plt
+    marker = 'x'
+    plt.clf()
+    print(results)
+    k =0
+    for i in results:
+        for j in i:
+            plt.scatter(k, j, c='red',marker='o')
+        k=k+1
+    plt.savefig(savefig_filename)
+    plt.show()

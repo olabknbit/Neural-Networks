@@ -86,7 +86,7 @@ def main():
     args = parser.parse_args()
 
     # Seed the random number generator
-    random.seed(args.seed)
+    #random.seed(args.seed)
 
     generate_trips(args.routes_lines, args.routes_stops, args.trips_m, args.trips_transfers)
 

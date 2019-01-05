@@ -1,6 +1,6 @@
 import random
 
-from nnr_new import Innovation
+from perceptron.nnr_new import Innovation
 
 
 def validate(network, change=""):
@@ -8,8 +8,11 @@ def validate(network, change=""):
 
     def print_error_and_exit(error):
         print(error)
+        print("\n")
         print(change)
+        print("\n")
         print(network.to_str())
+        print("\n")
         exit(1)
 
     if len(network.innovations) == 0:
@@ -22,7 +25,7 @@ def validate(network, change=""):
         if innovation.source not in neurons or innovation.end not in neurons:
             print_error_and_exit("innovation neuron not in neurons")
 
-    for neuron_id, neuron in neurons.iteritems():
+    for neuron_id, neuron in neurons.items():
         for neuron_in_id in neuron.in_ns:
             neuron_in = neurons[neuron_in_id]
             if neuron_id not in neuron_in.out_ns:
@@ -31,7 +34,9 @@ def validate(network, change=""):
         for neuron_out_id in neuron.out_ns:
             neuron_out = neurons[neuron_out_id]
             if neuron_id not in neuron_out.in_ns:
-                print_error_and_exit("BIG BAD ERROR type 2:\n\t" + neuron_id + 'not in' + neuron_out.in_ns)
+                print("\n")
+                print(""+str(neuron_id)+"\n")
+                print_error_and_exit("BIG BAD ERROR type 2:\n\t" + str(neuron_id) + ' not in' + str(neuron_out.in_ns))
     return True
 
 
@@ -106,7 +111,7 @@ def randomly_add_neuron(network, neuron_id, neuron_source_id, neuron_end_id, inn
     if neuron_source is None or neuron_end is None or neuron_end.in_ns.get(neuron_source.id) is None:
         return network, False
 
-    from nnr_new import Neuron
+    from perceptron.nnr_new import Neuron
     new_in_ns = {neuron_source.id: 1.0}
     new_out_ns = [neuron_end.id]
     neuron_source.out_ns.remove(neuron_end.id)
@@ -131,6 +136,8 @@ def randomly_add_neuron(network, neuron_id, neuron_source_id, neuron_end_id, inn
     network.innovations.append(Innovation(neuron_source.id, new_neuron.id, innovation_number + 1))
     change = "Adding neuron %d between %d and %d. Innovation number %d. Network %s" \
              % (neuron_id, neuron_source_id, neuron_end_id, innovation_number, network.to_str())
+    print(change)
+    print("\n")
     validate(network, change=change)
     return network, True
 
@@ -175,14 +182,14 @@ def breed_children(network1, network2, innovation_number):
     if network1.equals(network2):
         return network1
 
-    from nnr_new import Neuron, NeuralNetwork
+    from perceptron.nnr_new import Neuron, NeuralNetwork
     i1 = 0
     i2 = 0
 
     neurons, input_neurons, innovations = {}, [], []
 
     def add_neurons_from_innovation(innovation, original_network):
-        from nnr_new import innovation_of
+        from perceptron.nnr_new import innovation_of
         if innovation.disabled:
             innovations.append(innovation_of(innovation))
             return
@@ -246,7 +253,7 @@ def breed_children(network1, network2, innovation_number):
 def get_iterator(number_of_elements):
     import itertools
     combs = list(itertools.combinations(range(number_of_elements), 2))
-    perm = range(len(combs))
+    perm = list(range(len(combs)))
     random.shuffle(perm)
 
     return [combs[comb_index] for comb_index in perm]
@@ -308,8 +315,10 @@ class NEAT:
     def calculate_fitness(self):
         print("---CALCULATE FITNESS---")
         for spec in self.species:
-            from nnr_new import score
+            from perceptron.nnr_new import score
             for network in spec.networks:
+                print("\n")
+                print(network.to_str())
                 fitness = score(network, self.X_train, self.y_train, self.X_test, self.y_test, n_iter=self.n_iter)
                 self.fitness[network.id] = fitness
 
@@ -346,7 +355,9 @@ class NEAT:
 
         for spec_id, spec in enumerate(self.species):
             # Sort networks by fitness scores.
-            spec.networks.sort(cmp=cmp_nn)
+            from functools import cmp_to_key
+            spec.networks.sort(key = cmp_to_key(cmp_nn))
+            #spec.networks.sort(cmp=cmp_nn)
             if self.verbose:
                 spec.show_off(spec_id)
 
@@ -377,7 +388,7 @@ class NEAT:
                         parent = spec.networks[0]
                     else:
                         parent = spec.networks[random.randint(0, len(spec.networks) - 1)]
-                    from nnr_new import clone
+                    from perceptron.nnr_new import clone
                     child = clone(parent)
                     self.mutate(child)
                     child.id = self.get_new_network_id()
@@ -402,7 +413,7 @@ class NEAT:
         return self.network_id
 
     def add_connection(self, network):
-        neurons = network.neurons.values()
+        neurons = list(network.neurons.values())
         my_it = get_iterator(len(neurons))
         for id1, id2 in my_it:
             neuron_source_id, neuron_end_id = neurons[id1].id, neurons[id2].id
@@ -414,7 +425,7 @@ class NEAT:
         return network
 
     def add_neuron(self, network):
-        neurons = network.neurons.values()
+        neurons = list(network.neurons.values())
         my_it = get_iterator(len(neurons))
         for id1, id2 in my_it:
             neuron_source_id, neuron_end_id = neurons[id1].id, neurons[id2].id
@@ -477,25 +488,26 @@ class NEAT:
     def save_networks(self):
         for spec in self.species:
             for network in spec.networks:
-                dir = 'tmp/'
+                dir = ''
                 base_name = str(network.id)
                 savefig_filename = dir + base_name + '.png'
-                from nnr_new import score
+                from perceptron.nnr_new import score
                 fitness = score(network, self.X_train, self.y_train, self.X_test, self.y_test, n_iter=self.n_iter,
                                 savefig_filename=savefig_filename)
                 print(savefig_filename, network.score)
                 self.fitness[network.id] = fitness
                 save_nn_filename = dir + base_name + '-' + str(network.score)
-                from util import write_network_to_file_regression
+                from perceptron.util import write_network_to_file_regression
                 write_network_to_file_regression(save_nn_filename, network)
 
     def show_off(self):
         for spec_id, spec in enumerate(self.species):
             spec.show_off(spec_id)
+    
 
 
 def create_random_network(train_filename, test_filename, neat_params, train_params, activation='tanh', verbose=True):
-    from util import get_activation_f_and_f_d_by_name, initialize_network, get_split_dataset
+    from perceptron.util import get_activation_f_and_f_d_by_name, initialize_network, get_split_dataset
     X_train, y_train, X_test, y_test = get_split_dataset(train_filename, test_filename)
     n_inputs = len(X_train[0])
     innovation_number = n_inputs
@@ -509,15 +521,27 @@ def create_random_network(train_filename, test_filename, neat_params, train_para
 
 def main(train_filename, test_filename, neat_params, n_generations, train_params, save=False, verbose=True):
     neat = create_random_network(train_filename, test_filename, neat_params, train_params, verbose=verbose)
-
+    results = list()
     for generation in range(0, n_generations):
         print("-GENERATION %d-" % generation)
+        print("\n" + str(random.randint(0,10)))
+
         neat.calculate_fitness()
         neat.calculate_adjusted_fitness()
         neat.survival_of_the_fittest()
         neat.mate()
         neat.re_speciate()
         neat.sanity_check()
+
+
+        gen_result= list()
+        for spec in neat.species:
+            for ii in spec.networks:
+                print(ii.score)
+                if(ii.score is None):
+                    continue
+                gen_result.append(ii.score)
+        results.append(gen_result)
 
     generation = n_generations + 1
     print("-FINAL GENERATION %d-" % generation)
@@ -526,3 +550,7 @@ def main(train_filename, test_filename, neat_params, n_generations, train_params
         neat.save_networks()
     else:
         neat.show_off()
+
+
+    from perceptron.util import visualize_result
+    visualize_result(results, "save_fig.png")
