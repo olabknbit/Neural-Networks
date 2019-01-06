@@ -274,7 +274,7 @@ class NeuralNetwork:
         #print(len(self.innovations))
         if innovation_index >= len(self.innovations):
             return None
-        print(self.innovations[innovation_index].to_str())
+        #print(self.innovations[innovation_index].to_str())
         return self.innovations[innovation_index]
 
     def equals(self, other):

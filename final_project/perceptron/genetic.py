@@ -8,11 +8,11 @@ def validate(network, change="", should_exit_after= True):
 
     def print_error_and_exit(error, should_exit_after=True):
         print(error)
-        print("\n")
+        #print("\n")
         print(change)
-        print("\n")
+        #print("\n")
         print(network.to_str())
-        print("\n")
+        #print("\n")
         if(should_exit_after):
             exit(1)
         return False
@@ -42,18 +42,18 @@ def validate(network, change="", should_exit_after= True):
             neuron_out = neurons[neuron_out_id]
             if neuron_id not in neuron_out.in_ns:
                 disabled = False
-                print("\n")
-                print(str(neuron.id)+"\n")
-                print(str(neuron_out_id)+"\n")
-                print("\n")
+                # print("\n")
+                # print(str(neuron.id)+"\n")
+                # print(str(neuron_out_id)+"\n")
+                # print("\n")
                 
                 for innovation in network.innovations:
-                    print(innovation.to_str())
-                    print("neuron_id = "+str(neuron_id)+" neoruonout = "+str(neuron_out_id))
+                    #print(innovation.to_str())
+                    #print("neuron_id = "+str(neuron_id)+" neoruonout = "+str(neuron_out_id))
                     if innovation.source == neuron_id and innovation.end == neuron_out_id:
                         disabled = innovation.disabled
-                        print(disabled)
-                print(disabled)
+                    #    print(disabled)
+                #print(disabled)
                 if(disabled):
                     continue
                 print("\n")
@@ -134,9 +134,12 @@ def randomly_add_link(network, neuron_source_id, neuron_end_id, innovation_numbe
 
 
 def randomly_add_neuron(network, neuron_id, neuron_source_id, neuron_end_id, innovation_number):
+    change = ""
+    print(validate(network, change, False))
     neurons = network.neurons
     neuron_source = neurons.get(neuron_source_id)
     neuron_end = neurons.get(neuron_end_id)
+    
     if neuron_source is None or neuron_end is None or neuron_end.in_ns.get(neuron_source.id) is None:
         return network, False
 
@@ -144,15 +147,25 @@ def randomly_add_neuron(network, neuron_id, neuron_source_id, neuron_end_id, inn
     new_in_ns = {neuron_source.id: 1.0}
     new_out_ns = [neuron_end.id]
     neuron_source.out_ns.remove(neuron_end.id)
+    #neuron_source.out_ns = list(filter(lambda a: a != neuron_end.id, neuron_source.out_ns))
 
+#tu cos siedzi 
     weight = neuron_end.in_ns.pop(neuron_source.id)
+    #print(neuron_source.id)
+    if neuron_end.id in neuron_source.out_ns: 
+        neuron_end.in_ns[neuron_source.id]= weight
+    #print(neuron_source.to_str())
+    #print(neuron_end.to_str())
+
     new_neuron = Neuron(neuron_id, new_in_ns, new_out_ns, 0.3)
+    #print(new_neuron.to_str())
     neuron_source.out_ns.append(new_neuron.id)
     neuron_end.in_ns[new_neuron.id] = weight
     neurons[new_neuron.id] = new_neuron
+    
 
     def get_innovation_index():
-        print(network.to_str())
+        #print(network.to_str())
         for index, innovation in enumerate(network.innovations):
             source = neurons[innovation.source]
             end = neurons[innovation.end]
@@ -160,16 +173,17 @@ def randomly_add_neuron(network, neuron_id, neuron_source_id, neuron_end_id, inn
                 return index
 
     innovation_index = get_innovation_index()
+    
     network.innovations[innovation_index].disabled = True
     network.innovations.append(Innovation(new_neuron.id, neuron_end.id, innovation_number))
     network.innovations.append(Innovation(neuron_source.id, new_neuron.id, innovation_number + 1))
     change = "Adding neuron %d between %d and %d. Innovation number %d. Network %s" \
              % (neuron_id, neuron_source_id, neuron_end_id, innovation_number, network.to_str())
-    print("\n")
-    print(new_neuron.to_str())
-    print("\n")
-    print(change)
-    print("\n")
+    #print("\n")
+    #print(new_neuron.to_str())
+    #print("\n")
+    #print(change)
+    #print("\n")
     validate(network, change=change)
     return network, True
 
@@ -251,7 +265,7 @@ def breed_children(network1, network2, innovation_number, tryagain = 0):
         return
 
     for i in range(innovation_number + 1):
-        print("Iteracja = "+str(i))
+        #print("Iteracja = "+str(i))
         innovation1 = network1.get_innovation_or_none(i1)
         innovation2 = network2.get_innovation_or_none(i2)
         #print(" in1 "+str(innovation1)+" in2 "+str(innovation2))
@@ -259,7 +273,7 @@ def breed_children(network1, network2, innovation_number, tryagain = 0):
             # pick which parent child should inherit from
             # copy neurons and connection weight to the child
             # proceed
-            print("both")
+            #print("both")
             r = random.random()
             if r < 0.5:
                 add_neurons_from_innovation(innovation1, network1)
@@ -272,7 +286,7 @@ def breed_children(network1, network2, innovation_number, tryagain = 0):
                 innovation1 is not None and innovation2 is not None and innovation1.innovation_number < innovation2.innovation_number) \
                 or (innovation1 is not None and innovation2 is None):
             # add connection (and neuron) from innovation1 to the child
-            print("in1")
+            #print("in1")
 
             add_neurons_from_innovation(innovation1, network1)
             i1 += 1
@@ -280,7 +294,7 @@ def breed_children(network1, network2, innovation_number, tryagain = 0):
                 innovation1 is not None and innovation2 is not None and innovation1.innovation_number > innovation2.innovation_number) \
                 or (innovation2 is not None and innovation1 is None):
             # add connection (and neuron) from innovation2 to the child
-            print("in2")
+            #print("in2")
             add_neurons_from_innovation(innovation2, network2)
             i2 += 1
         else:
@@ -288,11 +302,11 @@ def breed_children(network1, network2, innovation_number, tryagain = 0):
     #print("\n")
     #print(input_neurons)
     network = NeuralNetwork(neurons, input_neurons, network1.output_neuron, innovations=innovations)
-    print("\n")
-    print("\n")
-    print(network.to_str())
-    print("\n")
-    print("\n")
+    #print("\n")
+    #print("\n")
+    #print(network.to_str())
+    #print("\n")
+    #print("\n")
     change = "breeding a child between \n\n\t%s \n\n\t %s\n child \n\n\t %s"% (network1.to_str(), network2.to_str(), network.to_str())
     if(validate(network, change ,False)):
         return network
@@ -370,11 +384,11 @@ class NEAT:
         for spec in self.species:
             from perceptron.nnr_new import score
             for network in spec.networks:
-                print("\n")
-                print(network.to_str())
-                print("\n")
-                print(network.input_neurons)
-                print("\n")
+                #print("\n")
+                #print(network.to_str())
+                #print("\n")
+                #print(network.input_neurons)
+                #print("\n")
                 fitness = score(network, self.X_train, self.y_train, self.X_test, self.y_test, n_iter=self.n_iter)
                 self.fitness[network.id] = fitness
 
