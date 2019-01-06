@@ -107,24 +107,36 @@ class NeuralNetwork:
         return self.neurons[end_id].in_ns.get(source_id)
 
     def get_output(self, neuron):
-        if neuron.output is None:
+        #print("neuron id = "+ str(neuron.id))
+        if  neuron.output is None:#True:
             weights = []
             inputs = []
             for in_neuron_id, in_neuron_weight in neuron.in_ns.items():
                 weights.append(in_neuron_weight)
                 in_neuron = self.neurons[in_neuron_id]
-                inputs.append(self.get_output(in_neuron))
+                #print("in_neuron = " + str(in_neuron.id))
+                value = self.get_output(in_neuron)
+                #print("value = " + str(value))
+                inputs.append(value)
+
+            #print("inputs= "+str(inputs))
             activation = activate(weights, inputs, neuron.bias_weight)
             neuron.output = self.activation_f(activation)
-
+        
         return neuron.output
 
     # Pipe data row through the network and get final outputs.
     def forward_propagate(self, row):
+        #print("input neurons= " + str(self.input_neurons)+"row= " + str(row))
         for input_neuron_id, val in zip(self.input_neurons, row):
+            #print(str(input_neuron_id) +" " +str(val))
             input_neuron = self.neurons[input_neuron_id]
+            #print("input neuron = "+str(input_neuron.id))
             input_neuron.output = val
+        
         output_neuron = self.neurons[self.output_neuron]
+        #print("output neurons= " + str(output_neuron.id))
+
         return self.get_output(output_neuron)
 
     def get_delta(self, neuron):
@@ -132,21 +144,21 @@ class NeuralNetwork:
         if delta is not None:
             return delta
         error = 0.0
-        # print("petla \n")
+        #print("petla")
 
-        # print("neurion id "+str(neuron.id)+"\n")
+        #print("neurion id "+str(neuron.id))
      
         for neuron_id in neuron.out_ns:
-            # print("out_ns neuronsid"+str(neuron_id)+"\n")
+           # print("out_ns neuronsid= "+str(neuron_id))
             out_n = self.neurons[neuron_id]
-            # print("out_n "+str(out_n.id)+"\n")
+            #print("out_n= "+str(out_n.id))
             weight = out_n.in_ns[neuron.id]
             delta = self.get_delta(out_n)
             error += (weight * delta)
         delta = 0
-        # if(neuron.output is not None):
-        print(neuron.to_str2())
-        delta = error * self.activation_f_derivative(neuron.output)
+        if(neuron.output is not None):
+            delta = error * self.activation_f_derivative(neuron.output)
+
         self.deltas[neuron.id] = delta
         return delta
 
@@ -155,17 +167,17 @@ class NeuralNetwork:
         # Update last layer's (output layer's) 'delta' field.
         # This field is needed to calculate 'delta' fields in previous (closer to input layer) layers,
         # so then we can update the weights.
-        print("\n")
-        print("network = " + self.to_str())
-
+        #print("\n")
+        # #print("network = " + self.to_str())
+        #print("Self input_neurons = "+str(self.input_neurons))
         output_neuron = self.neurons[self.output_neuron]
         error = (expected_val - output_neuron.output)
         self.deltas[output_neuron.id] = error * self.activation_f_derivative(output_neuron.output)
         for input_neuron_id in self.input_neurons:
             if input_neuron_id not in self.deltas:
                 input_neuron = self.neurons[input_neuron_id]
-                print("\n")
-                print("id = " + str(self.id) + "    " + str(input_neuron_id))
+                #print("\n")
+                #print("id = " + str(self.id) + "    " + str(input_neuron_id))
                 self.deltas[input_neuron_id] = self.get_delta(input_neuron)
 
     def update_weights_neuron(self, l_rate, neuron):
@@ -233,11 +245,15 @@ class NeuralNetwork:
             iter_error = 0.0
             i = 0
             for row, expected in zip(X_train_mini, y_train_mini):
+                #print("row ="+str(row))
                 output = self.forward_propagate(row)
 
                 iter_error += np.sqrt((expected - output) ** 2) 
-                # print(str(epoch) + " " + str(i))
-                i = i+1
+                #print(str(epoch) + " " + str(i))
+                #i = i+1
+                #for key, neur in self.neurons.items():
+                    #print(neur.output)
+                    #print(key)
                 self.backward_propagate(expected)
                 self.update_weights(l_rate)
                 self.reset()
@@ -254,8 +270,11 @@ class NeuralNetwork:
                 # TODO use moment
 
     def get_innovation_or_none(self, innovation_index):
+        #print(innovation_index)
+        #print(len(self.innovations))
         if innovation_index >= len(self.innovations):
             return None
+        print(self.innovations[innovation_index].to_str())
         return self.innovations[innovation_index]
 
     def equals(self, other):

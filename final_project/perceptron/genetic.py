@@ -3,40 +3,69 @@ import random
 from perceptron.nnr_new import Innovation
 
 
-def validate(network, change=""):
+def validate(network, change="", should_exit_after= True):
     neurons = network.neurons
 
-    def print_error_and_exit(error):
+    def print_error_and_exit(error, should_exit_after=True):
         print(error)
         print("\n")
         print(change)
         print("\n")
         print(network.to_str())
         print("\n")
-        exit(1)
+        if(should_exit_after):
+            exit(1)
+        return False
 
     if len(network.innovations) == 0:
-        print_error_and_exit("WTF 0 innovations")
+        print_error_and_exit("WTF 0 innovations", should_exit_after)
 
     if len(neurons) == 0:
-        print_error_and_exit("WTF 0 neurons")
+        print_error_and_exit("WTF 0 neurons", should_exit_after)
 
     for innovation in network.innovations:
         if innovation.source not in neurons or innovation.end not in neurons:
-            print_error_and_exit("innovation neuron not in neurons")
+            for nn in neurons:
+                print(nn)
+            print("\n")
+            print(innovation.source)
+            print(innovation.end)
+            print_error_and_exit("innovation neuron not in neurons", should_exit_after)
 
     for neuron_id, neuron in neurons.items():
         for neuron_in_id in neuron.in_ns:
             neuron_in = neurons[neuron_in_id]
             if neuron_id not in neuron_in.out_ns:
-                print_error_and_exit("BIG BAD ERROR type 1")
+                print_error_and_exit("BIG BAD ERROR type 1", should_exit_after)
 
         for neuron_out_id in neuron.out_ns:
             neuron_out = neurons[neuron_out_id]
             if neuron_id not in neuron_out.in_ns:
+                disabled = False
                 print("\n")
-                print(""+str(neuron_id)+"\n")
-                print_error_and_exit("BIG BAD ERROR type 2:\n\t" + str(neuron_id) + ' not in' + str(neuron_out.in_ns))
+                print(str(neuron.id)+"\n")
+                print(str(neuron_out_id)+"\n")
+                print("\n")
+                
+                for innovation in network.innovations:
+                    print(innovation.to_str())
+                    print("neuron_id = "+str(neuron_id)+" neoruonout = "+str(neuron_out_id))
+                    if innovation.source == neuron_id and innovation.end == neuron_out_id:
+                        disabled = innovation.disabled
+                        print(disabled)
+                print(disabled)
+                if(disabled):
+                    continue
+                print("\n")
+                print(str(neuron_id)+"\n")
+
+                print(str(neuron_out.id)+"\n")
+                print(str(neuron.to_str()))
+                print(str(neuron_out.to_str()))
+                print_error_and_exit("BIG BAD ERROR type 2:\n\t" + str(neuron_id) + ' not in' + str(neuron_out.in_ns),should_exit_after)
+
+    return not contains_cycle(network)
+
     return True
 
 
@@ -136,6 +165,9 @@ def randomly_add_neuron(network, neuron_id, neuron_source_id, neuron_end_id, inn
     network.innovations.append(Innovation(neuron_source.id, new_neuron.id, innovation_number + 1))
     change = "Adding neuron %d between %d and %d. Innovation number %d. Network %s" \
              % (neuron_id, neuron_source_id, neuron_end_id, innovation_number, network.to_str())
+    print("\n")
+    print(new_neuron.to_str())
+    print("\n")
     print(change)
     print("\n")
     validate(network, change=change)
@@ -178,15 +210,17 @@ def calculate_compatibility(network1, network2):
     return res
 
 
-def breed_children(network1, network2, innovation_number):
+def breed_children(network1, network2, innovation_number, tryagain = 0):
     if network1.equals(network2):
         return network1
-
+    
     from perceptron.nnr_new import Neuron, NeuralNetwork
     i1 = 0
     i2 = 0
 
     neurons, input_neurons, innovations = {}, [], []
+    #input_neurons = network1.input_neurons #????
+    #print(input_neurons)
 
     def add_neurons_from_innovation(innovation, original_network):
         from perceptron.nnr_new import innovation_of
@@ -217,12 +251,15 @@ def breed_children(network1, network2, innovation_number):
         return
 
     for i in range(innovation_number + 1):
+        print("Iteracja = "+str(i))
         innovation1 = network1.get_innovation_or_none(i1)
         innovation2 = network2.get_innovation_or_none(i2)
+        #print(" in1 "+str(innovation1)+" in2 "+str(innovation2))
         if innovation1 is not None and innovation2 is not None and innovation1.innovation_number == innovation2.innovation_number:
             # pick which parent child should inherit from
             # copy neurons and connection weight to the child
             # proceed
+            print("both")
             r = random.random()
             if r < 0.5:
                 add_neurons_from_innovation(innovation1, network1)
@@ -235,19 +272,35 @@ def breed_children(network1, network2, innovation_number):
                 innovation1 is not None and innovation2 is not None and innovation1.innovation_number < innovation2.innovation_number) \
                 or (innovation1 is not None and innovation2 is None):
             # add connection (and neuron) from innovation1 to the child
+            print("in1")
+
             add_neurons_from_innovation(innovation1, network1)
             i1 += 1
         elif (
                 innovation1 is not None and innovation2 is not None and innovation1.innovation_number > innovation2.innovation_number) \
                 or (innovation2 is not None and innovation1 is None):
             # add connection (and neuron) from innovation2 to the child
+            print("in2")
             add_neurons_from_innovation(innovation2, network2)
             i2 += 1
         else:
             break
+    #print("\n")
+    #print(input_neurons)
     network = NeuralNetwork(neurons, input_neurons, network1.output_neuron, innovations=innovations)
-    validate(network, change="breeding a child between \n\t%s\n\t%s\nchild\n\t%s" % (network1.to_str(), network2.to_str(), network.to_str()))
-    return network
+    print("\n")
+    print("\n")
+    print(network.to_str())
+    print("\n")
+    print("\n")
+    change = "breeding a child between \n\n\t%s \n\n\t %s\n child \n\n\t %s"% (network1.to_str(), network2.to_str(), network.to_str())
+    if(validate(network, change ,False)):
+        return network
+    elif(tryagain < 5):
+        return breed_children(network1, network2, innovation_number, tryagain )# try again
+    else:
+        return network1
+
 
 
 def get_iterator(number_of_elements):
@@ -319,6 +372,9 @@ class NEAT:
             for network in spec.networks:
                 print("\n")
                 print(network.to_str())
+                print("\n")
+                print(network.input_neurons)
+                print("\n")
                 fitness = score(network, self.X_train, self.y_train, self.X_test, self.y_test, n_iter=self.n_iter)
                 self.fitness[network.id] = fitness
 
@@ -378,6 +434,7 @@ class NEAT:
     def mate(self):
         print("---MATING SEASON---")
         for spec in self.species:
+            #print(spec)
             baby_count = spec.population_size - len(spec.networks)
 
             for _ in range(baby_count):
@@ -498,7 +555,7 @@ class NEAT:
                 self.fitness[network.id] = fitness
                 save_nn_filename = dir + base_name + '-' + str(network.score)
                 from perceptron.util import write_network_to_file_regression
-                write_network_to_file_regression(save_nn_filename, network)
+                #write_network_to_file_regression(save_nn_filename, network)
 
     def show_off(self):
         for spec_id, spec in enumerate(self.species):
@@ -537,7 +594,7 @@ def main(train_filename, test_filename, neat_params, n_generations, train_params
         gen_result= list()
         for spec in neat.species:
             for ii in spec.networks:
-                print(ii.score)
+                #print(ii.score)
                 if(ii.score is None):
                     continue
                 gen_result.append(ii.score)
