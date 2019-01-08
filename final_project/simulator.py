@@ -44,6 +44,7 @@ def get_time_at_next_stop(buses_at_stops, stops_orig, line_id, stop, start_time,
 
 
 def run(stops_orig, lines, first_stops, hours_l, trips):
+    import config
     results = []
     for hours in hours_l:
         buses_at_stops = get_times_at_stops(stops_orig, lines, first_stops, hours)
@@ -56,7 +57,7 @@ def run(stops_orig, lines, first_stops, hours_l, trips):
                 start_time = get_time_at_next_stop(buses_at_stops, stops_orig, line_id, stop, start_time, next_stop)
                 if start_time is None:
                     # penalty bc someone just got stranded at the bus stop.
-                    start_time = 100000
+                    start_time = config.no_avaible_bus_penalty
                     break
                 stop = next_stop
 

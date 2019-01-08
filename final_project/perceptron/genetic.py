@@ -622,9 +622,6 @@ def main(train_filename, test_filename, neat_params, n_generations, train_params
         neat.show_off()
 
 
-    # from perceptron.util import visualize_result
-    # visualize_result(results, "save_fig.png")
-
     best = float("inf")
     best_net = None
     for spec in neat.species:
@@ -635,4 +632,4 @@ def main(train_filename, test_filename, neat_params, n_generations, train_params
                 best_net = i
     
     print(best_net.score)
-    return best_net
+    return best_net, results

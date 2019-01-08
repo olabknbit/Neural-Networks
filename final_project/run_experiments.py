@@ -66,13 +66,17 @@ def main():
                                                             trips_m, trips_transfers, should_generate)
     from perceptron import genetic
     date_train_neat = datetime.now()#training
-    best_net = genetic.main(train_data_filename, test_data_filename, neat_params=config.get_neat_params(),
+    best_net, nets_score = genetic.main(train_data_filename, test_data_filename, neat_params=config.get_neat_params(),
                  n_generations=config.n_generations, train_params=config.get_train_params(), save=args.save)
         
     date_test_neat = datetime.now()#testing neat
     from test_neat import test_neat
-    test_neat_result  = test_neat(best_net)
+    test_neat_result, test_neat_result_single, generated_hours_file = test_neat(best_net)
     
+    date_test_generated_hours = datetime.now()#testing hours generated for neat
+    from test_hours_file import test_hours_file
+    test_generated_hours_result= test_hours_file(generated_hours_file)
+
     date_test_monte_carlo_small = datetime.now()#testing simulator- monte carlo
     number_of_tests = config.monte_carlo_tests_small
     from test_monte_carlo import test_monte_carlo
@@ -91,15 +95,24 @@ def main():
 
     date_end = datetime.now()#end
 
+    #from perceptron.util import visualize_result
+    #visualize_result(nets_score, "save_fig.png")
+
+
     print("\n\n")
     print("Training neat:"+str(date_test_neat-date_train_neat))
-    print("Testing neat:"+str(date_test_monte_carlo_small-date_test_neat))
+    print("Testing neat:"+str(date_test_generated_hours-date_test_neat))
+    print("Testing neat hours:"+str(date_test_monte_carlo_small-date_test_generated_hours))
     print("Testing small monte carlo simulator:"+str(date_test_monte_carlo_medium-date_test_monte_carlo_small))
-    print("Testing medium monte carlo simulator:"+str(date_test_monte_carlo_medium-date_test_monte_carlo_small))
+    print("Testing medium monte carlo simulator:"+str(date_test_monte_carlo_big-date_test_monte_carlo_medium))
     print("Testing big monte carlo simulator:"+str(date_end -date_test_monte_carlo_big))
 
-    print("Result neat:")
-    print(test_neat_result)
+    # print("Result neat:")
+    # print(test_neat_result)
+    print("Result single neat:")
+    print(test_neat_result_single)
+    print("Result single generated_hours:")
+    print(test_generated_hours_result)
     print("Result small monte carlo simulator:")
     print(test_monte_carlo_result_small)
     print("Result medium monte carlo simulator:")
@@ -107,7 +120,15 @@ def main():
     print("Result big monte carlo simulator:")
     print(test_monte_carlo_result_big)
 
-
+    print("Result single neat/big:")
+    print(100*test_neat_result_single[1]/test_monte_carlo_result_big[1][0])
+    print("Result genrated hours /big:")
+    print(100*test_generated_hours_result[1][0]/test_monte_carlo_result_big[1][0])
+    print("Result small monte carlo simulator/big:")
+    print(100*test_monte_carlo_result_small[1][0]/test_monte_carlo_result_big[1][0])
+    print("Result medium monte carlo simulator/big:")
+    print(100*test_monte_carlo_result_medium[1][0]/test_monte_carlo_result_big[1][0])
+   
 
 if __name__ == "__main__":
     main()
