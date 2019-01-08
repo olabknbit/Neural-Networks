@@ -35,16 +35,19 @@ def test_neat(neural_network):
     trips_filename = util.get_trips_filename(routes_lines, routes_stops, trips_m, trips_transfers)
     hours_filename = util.get_hours_results_filename(hours_n, hours_buses) 
 
-    i = 0
+
     with open(hours_filename, 'w') as file:
-        for _ in range(bests):
+        for _ in range(number_of_tests):
             hours = []
             for bus in hours_buses:
-                line_hours = best_results[i][0]
-                i = i+1
+                line_hours = []
+                for _ in range(bus):
+                    line_hours.append(random.randint(-util.DAY_LENGTH/2 , util.DAY_LENGTH/2))
                 hours.append(line_hours)
+            tests.append(hours)
             file.write(str(hours))
             file.write('\n')
+
     
     import simulator
 
