@@ -135,7 +135,7 @@ def randomly_add_link(network, neuron_source_id, neuron_end_id, innovation_numbe
 
 def randomly_add_neuron(network, neuron_id, neuron_source_id, neuron_end_id, innovation_number):
     change = ""
-    print(validate(network, change, False))
+    #print(validate(network, change, False))
     neurons = network.neurons
     neuron_source = neurons.get(neuron_source_id)
     neuron_end = neurons.get(neuron_end_id)
@@ -595,7 +595,6 @@ def main(train_filename, test_filename, neat_params, n_generations, train_params
     results = list()
     for generation in range(0, n_generations):
         print("-GENERATION %d-" % generation)
-        print("\n" + str(random.randint(0,10)))
 
         neat.calculate_fitness()
         neat.calculate_adjusted_fitness()
@@ -623,5 +622,17 @@ def main(train_filename, test_filename, neat_params, n_generations, train_params
         neat.show_off()
 
 
-    from perceptron.util import visualize_result
-    visualize_result(results, "save_fig.png")
+    # from perceptron.util import visualize_result
+    # visualize_result(results, "save_fig.png")
+
+    best = float("inf")
+    best_net = None
+    for spec in neat.species:
+        for i in spec.networks:
+            if(i.score is None):
+                continue
+            if(i.score< best):
+                best_net = i
+    
+    print(best_net.score)
+    return best_net

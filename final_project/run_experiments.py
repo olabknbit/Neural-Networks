@@ -57,6 +57,7 @@ def main():
     args = parser.parse_args()
     should_generate = args.generate
 
+    from datetime import datetime    
     import random
     random.seed(123)
     import config
@@ -64,8 +65,48 @@ def main():
     train_data_filename, test_data_filename = generate_data(routes_lines, routes_stops, hours_n, hours_buses,
                                                             trips_m, trips_transfers, should_generate)
     from perceptron import genetic
-    genetic.main(train_data_filename, test_data_filename, neat_params=config.get_neat_params(),
+    date_train_neat = datetime.now()#training
+    best_net = genetic.main(train_data_filename, test_data_filename, neat_params=config.get_neat_params(),
                  n_generations=config.n_generations, train_params=config.get_train_params(), save=args.save)
+        
+    date_test_neat = datetime.now()#testing neat
+    from test_neat import test_neat
+    test_neat_result  = test_neat(best_net)
+    
+    date_test_monte_carlo_small = datetime.now()#testing simulator- monte carlo
+    number_of_tests = config.monte_carlo_tests_small
+    from test_monte_carlo import test_monte_carlo
+    test_monte_carlo_result_small  = test_monte_carlo(number_of_tests)
+
+    date_test_monte_carlo_medium = datetime.now()#testing simulator- monte carlo
+    number_of_tests = config.monte_carlo_tests_medium
+    from test_monte_carlo import test_monte_carlo
+    test_monte_carlo_result_medium  = test_monte_carlo(number_of_tests)
+
+
+    date_test_monte_carlo_big = datetime.now()#testing simulator- monte carlo
+    number_of_tests = config.monte_carlo_tests_big
+    from test_monte_carlo import test_monte_carlo
+    test_monte_carlo_result_big  = test_monte_carlo(number_of_tests)
+
+    date_end = datetime.now()#end
+
+    print("\n\n")
+    print("Training neat:"+str(date_test_neat-date_train_neat))
+    print("Testing neat:"+str(date_test_monte_carlo_small-date_test_neat))
+    print("Testing small monte carlo simulator:"+str(date_test_monte_carlo_medium-date_test_monte_carlo_small))
+    print("Testing medium monte carlo simulator:"+str(date_test_monte_carlo_medium-date_test_monte_carlo_small))
+    print("Testing big monte carlo simulator:"+str(date_end -date_test_monte_carlo_big))
+
+    print("Result neat:")
+    print(test_neat_result)
+    print("Result small monte carlo simulator:")
+    print(test_monte_carlo_result_small)
+    print("Result medium monte carlo simulator:")
+    print(test_monte_carlo_result_medium)
+    print("Result big monte carlo simulator:")
+    print(test_monte_carlo_result_big)
+
 
 
 if __name__ == "__main__":

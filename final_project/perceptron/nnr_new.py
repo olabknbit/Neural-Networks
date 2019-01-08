@@ -247,7 +247,6 @@ class NeuralNetwork:
             for row, expected in zip(X_train_mini, y_train_mini):
                 #print("row ="+str(row))
                 output = self.forward_propagate(row)
-
                 iter_error += np.sqrt((expected - output) ** 2) 
                 #print(str(epoch) + " " + str(i))
                 #i = i+1
@@ -279,6 +278,16 @@ class NeuralNetwork:
 
     def equals(self, other):
         return self.to_str() == other.to_str()
+
+    def test_without_y(self, X_test):
+        predicted_outputs = []
+        error = 0.0
+        for row in X_test:
+            predicted_output = self.predict(row)
+            predicted_outputs.append((row, predicted_output))
+
+        return predicted_outputs
+        
 
 
 def score(network, X_train, y_train, X_test, y_test, n_iter, savefig_filename=None):

@@ -23,6 +23,8 @@ def str_list(l):
 def get_hours_filename(n, buses):
     return PREFIX + GEN + HELP + 'hours-' + str(n) + '-' + str_list(buses) + '.txt'
 
+def get_hours_results_filename(n, buses):
+    return PREFIX + GEN + HELP + 'hours-' + str(n) + '-' + str_list(buses) + '-results.txt'
 
 def get_mode_filename(lines, stops, trips, transfers, n, buses, mode='train', nn=None, ext='txt'):
     if nn is not None:

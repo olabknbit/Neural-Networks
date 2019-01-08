@@ -169,9 +169,12 @@ def read_network_from_file_f_name(filename, activation_f_name):
 
 
 def scale_data(y_train, y_test):
-    min_y = min(y_train + y_test)
-    max_y = max(y_train + y_test)
-
+    # min_y = min(y_train + y_test)
+    # max_y = max(y_train + y_test)
+    import config 
+    min_y = 0
+    max_y =  10000 *  config.trips_m
+    
     y_train = [(y - min_y) / (max_y - min_y) for y in y_train]
     y_test = [(y - min_y) / (max_y - min_y) for y in y_test]
 
