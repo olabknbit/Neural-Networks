@@ -95,40 +95,63 @@ def main():
 
     date_end = datetime.now()#end
 
-    #from perceptron.util import visualize_result
-    #visualize_result(nets_score, "save_fig.png")
 
 
-    print("\n\n")
-    print("Training neat:"+str(date_test_neat-date_train_neat))
-    print("Testing neat:"+str(date_test_generated_hours-date_test_neat))
-    print("Testing neat hours:"+str(date_test_monte_carlo_small-date_test_generated_hours))
-    print("Testing small monte carlo simulator:"+str(date_test_monte_carlo_medium-date_test_monte_carlo_small))
-    print("Testing medium monte carlo simulator:"+str(date_test_monte_carlo_big-date_test_monte_carlo_medium))
-    print("Testing big monte carlo simulator:"+str(date_end -date_test_monte_carlo_big))
+
+    string_result = ("Training neat: "+str(date_test_neat-date_train_neat) +
+        "\nTesting neat: "+str(date_test_generated_hours-date_test_neat)+
+
+        "\nTesting neat hours: "+str(date_test_monte_carlo_small-date_test_generated_hours)+
+        "\nTesting small monte carlo simulator: "+str(date_test_monte_carlo_medium-date_test_monte_carlo_small)+
+        "\nTesting medium monte carlo simulator: "+str(date_test_monte_carlo_big-date_test_monte_carlo_medium)+
+        "\nTesting big monte carlo simulator: "+str(date_end -date_test_monte_carlo_big)+
+
+
+        "\n\nResult single neat: " + str(test_neat_result_single)+
+        "\nResult single generated_hours: " + str(test_generated_hours_result)+
+        "\nResult small monte carlo simulator: "+ str(test_monte_carlo_result_small)+
+        "\nResult medium monte carlo simulator: "+ str(test_monte_carlo_result_medium)+
+        "\nResult big monte carlo simulator: " + str(test_monte_carlo_result_big)+
+
+        "\n\nResult single neat/big: " + 
+        str(100*test_neat_result_single[1]/test_monte_carlo_result_big[1][0])+
+        "\nResult genrated hours /big: " + 
+        str(100*test_generated_hours_result[1][0]/test_monte_carlo_result_big[1][0])+
+        "\nResult small monte carlo simulator/big: " + 
+        str(100*test_monte_carlo_result_small[1][0]/test_monte_carlo_result_big[1][0])+
+        "\nResult medium monte carlo simulator/big: "+ 
+        str(100*test_monte_carlo_result_medium[1][0]/test_monte_carlo_result_big[1][0]))
+   
+    print(string_result)
+
+    directory = 'results/' + str(date_end.strftime('%H-%M-%S-%d-%m-%Y')) + '/' 
+
+    import os
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    file_to_save_result_name = directory + "results.txt"
+    with open(file_to_save_result_name, 'w') as file:
+        file.write(string_result)
+
+    file_to_save_neat_scores_name = directory + "neat_scores.txt"
+    with open(file_to_save_neat_scores_name, 'w') as file:
+        for i in nets_score:
+            file.write(str(i))
+            file.write('\n')
+
+    file_to_save_config_name = directory + "config.txt"
+    with open(file_to_save_config_name, 'w') as file:
+        file.write("Neat params: \n"+str(config.get_neat_params()))
+        file.write("\nTrain params: \n"+str(config.get_train_params()))
+        file.write("\nTest params: \n"+str(config.get_test_params()))
+
+    from perceptron.util import visualize_result
+    visualize_result(nets_score, directory + "neat_scores.png")
+
 
     # print("Result neat:")
     # print(test_neat_result)
-    print("Result single neat:")
-    print(test_neat_result_single)
-    print("Result single generated_hours:")
-    print(test_generated_hours_result)
-    print("Result small monte carlo simulator:")
-    print(test_monte_carlo_result_small)
-    print("Result medium monte carlo simulator:")
-    print(test_monte_carlo_result_medium)
-    print("Result big monte carlo simulator:")
-    print(test_monte_carlo_result_big)
-
-    print("Result single neat/big:")
-    print(100*test_neat_result_single[1]/test_monte_carlo_result_big[1][0])
-    print("Result genrated hours /big:")
-    print(100*test_generated_hours_result[1][0]/test_monte_carlo_result_big[1][0])
-    print("Result small monte carlo simulator/big:")
-    print(100*test_monte_carlo_result_small[1][0]/test_monte_carlo_result_big[1][0])
-    print("Result medium monte carlo simulator/big:")
-    print(100*test_monte_carlo_result_medium[1][0]/test_monte_carlo_result_big[1][0])
-   
 
 if __name__ == "__main__":
     main()
