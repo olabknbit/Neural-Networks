@@ -255,7 +255,7 @@ def visualize_result(results, savefig_filename):
     import matplotlib.pyplot as plt
     marker = 'x'
     plt.clf()
-    print(results)
+    #print(results)
     k =0
     for i in results:
         for j in i:

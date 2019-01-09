@@ -311,9 +311,9 @@ def breed_children(network1, network2, innovation_number, tryagain = 0):
     if(validate(network, change ,False)):
         return network
     elif(tryagain < 5):
-        return breed_children(network1, network2, innovation_number, tryagain )# try again
+        return breed_children(network1, network2, innovation_number, tryagain + 1 )# try again
     else:
-        return network1
+        return None
 
 
 
@@ -468,9 +468,11 @@ class NEAT:
                     parent_id, second_parent_id = get_iterator(len(spec.networks))[0]
                     parent, second_parent = spec.networks[parent_id], spec.networks[second_parent_id]
                     child = breed_children(parent, second_parent, self.innovation_number)
-                    child.id = self.get_new_network_id()
-
-                spec.networks.append(child)
+                    # Mating failed
+                    if child is not None:
+                        child.id = self.get_new_network_id()
+                if child is not None:
+                    spec.networks.append(child)
 
     def mutate(self, network):
         print("----MUTATE----")
@@ -622,14 +624,15 @@ def main(train_filename, test_filename, neat_params, n_generations, train_params
         neat.show_off()
 
 
+
     best = float("inf")
     best_net = None
     for spec in neat.species:
         for i in spec.networks:
-            if(i.score is None):
-                continue
-            if(i.score< best):
+            if i.score is not None and i.score< best:
+                best = i.score
                 best_net = i
+       
     
     print(best_net.score)
     return best_net, results
