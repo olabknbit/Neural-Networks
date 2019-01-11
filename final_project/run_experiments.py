@@ -71,7 +71,7 @@ def main():
         
     date_test_neat = datetime.now()#testing neat
     from test_neat import test_neat
-    test_neat_result, test_neat_result_single, generated_hours_file = test_neat(best_net)
+    test_neat_result, test_neat_result_single, generated_hours_file, pairs_result = test_neat(best_net)
     
     date_test_generated_hours = datetime.now()#testing hours generated for neat
     from test_hours_file import test_hours_file
@@ -95,6 +95,8 @@ def main():
 
     date_end = datetime.now()#end
 
+    from test_neat import calculate_error
+    error, error_percent = calculate_error(pairs_result)
 
 
 
@@ -108,6 +110,8 @@ def main():
 
 
         "\n\nResult single neat: " + str(test_neat_result_single)+
+        "\nNeat error: " + str(error)+
+        "\nNeat error_percent: " + str(error_percent)+
         "\nResult single generated_hours: " + str(test_generated_hours_result)+
         "\nResult small monte carlo simulator: "+ str(test_monte_carlo_result_small)+
         "\nResult medium monte carlo simulator: "+ str(test_monte_carlo_result_medium)+
@@ -142,7 +146,8 @@ def main():
 
     file_to_save_config_name = directory + "config.txt"
     with open(file_to_save_config_name, 'w') as file:
-        file.write("Neat params: \n"+str(config.get_neat_params()))
+        file.write("Filename params: \n"+str(config.get_filenames_params()))
+        file.write("\nNeat params: \n"+str(config.get_neat_params()))
         file.write("\nTrain params: \n"+str(config.get_train_params()))
         file.write("\nTest params: \n"+str(config.get_test_params()))
 

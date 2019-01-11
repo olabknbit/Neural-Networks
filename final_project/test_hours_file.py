@@ -4,6 +4,7 @@ def test_hours_file(file_name):
     import random
     routes_lines, routes_stops, hours_n, hours_buses, trips_m, trips_transfers = config.get_filenames_params()
 
+    random.seed(356)
 
     routes_filename = util.get_routes_filename(routes_lines, routes_stops)
     trips_filename = util.get_trips_filename(routes_lines, routes_stops, trips_m, trips_transfers)

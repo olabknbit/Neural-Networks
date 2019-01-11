@@ -13,6 +13,8 @@ def test_neat(neural_network):
     number_of_tests = config.neat_tests
     tests =[]
 
+    random.seed(123)
+
 
     hours_filename2 = util.get_hours_results_filename(number_of_tests, hours_buses)
     with open(hours_filename2, 'w') as file:
@@ -68,7 +70,8 @@ def test_neat(neural_network):
     #print(results_checked)
 
     results_checked, _ = scale_data(results_checked,[0])
-   
+    
+    pairs_resultNeat_resultSimulator = zip(results_checked, best_results)
 
     best_result = min(results_checked)
     index_best_result = results_checked.index(best_result)
@@ -78,7 +81,17 @@ def test_neat(neural_network):
 
     
 
-    return res, final_best_result, hours_filename2
+    return res, final_best_result, hours_filename2, pairs_resultNeat_resultSimulator
+
+def calculate_error(result_pairs):
+    import config
+    error = 0
+    for sim_value, neat_value in result_pairs:
+        error = error + abs(sim_value-neat_value[1])/sim_value
+
+    
+    
+    return error,  100* error/(config.neat_tests/10)
 
 
 
