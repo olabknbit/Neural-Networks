@@ -37,7 +37,8 @@ def test_monte_carlo(number_of_tests):
                 line_hours = []
                 for _ in range(bus):
                     line_hours.append(random.randint(0, util.DAY_LENGTH))
-                hours.append(line_hours)
+                line_hours.sort()
+                hours.append(line_hours)#Sortowanie
             tests.append(hours)
             file.write(str(hours))
             file.write('\n')

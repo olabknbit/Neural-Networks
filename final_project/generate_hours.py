@@ -12,7 +12,8 @@ def generate_hours(buses, n):
                 line_hours = []
                 for _ in range(bus):
                     line_hours.append(random.randint(0, util.DAY_LENGTH))
-                hours.append(line_hours)
+                line_hours.sort()
+                hours.append(line_hours)#Sortowanie?
             file.write(str(hours))
             file.write('\n')
 

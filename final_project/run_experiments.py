@@ -74,8 +74,8 @@ def main():
     test_neat_result, test_neat_result_single, generated_hours_file, pairs_result = test_neat(best_net)
     
     date_test_generated_hours = datetime.now()#testing hours generated for neat
-    from test_hours_file import test_hours_file
-    test_generated_hours_result= test_hours_file(generated_hours_file)
+    # from test_hours_file import test_hours_file # bez testowania całego zbioru testowego
+    # test_generated_hours_result= test_hours_file(generated_hours_file)
 
     date_test_monte_carlo_small = datetime.now()#testing simulator- monte carlo
     number_of_tests = config.monte_carlo_tests_small
@@ -112,15 +112,15 @@ def main():
         "\n\nResult single neat: " + str(test_neat_result_single)+
         "\nNeat error: " + str(error)+
         "\nNeat error_percent: " + str(error_percent)+
-        "\nResult single generated_hours: " + str(test_generated_hours_result)+
+        # "\nResult single generated_hours: " + str(test_generated_hours_result)+
         "\nResult small monte carlo simulator: "+ str(test_monte_carlo_result_small)+
         "\nResult medium monte carlo simulator: "+ str(test_monte_carlo_result_medium)+
         "\nResult big monte carlo simulator: " + str(test_monte_carlo_result_big)+
 
         "\n\nResult single neat/big: " + 
         str(100*test_neat_result_single[1]/test_monte_carlo_result_big[1][0])+
-        "\nResult genrated hours /big: " + 
-        str(100*test_generated_hours_result[1][0]/test_monte_carlo_result_big[1][0])+
+        # "\nResult genrated hours /big: " + 
+        # str(100*test_generated_hours_result[1][0]/test_monte_carlo_result_big[1][0])+
         "\nResult small monte carlo simulator/big: " + 
         str(100*test_monte_carlo_result_small[1][0]/test_monte_carlo_result_big[1][0])+
         "\nResult medium monte carlo simulator/big: "+ 
@@ -137,6 +137,11 @@ def main():
     file_to_save_result_name = directory + "results.txt"
     with open(file_to_save_result_name, 'w') as file:
         file.write(string_result)
+
+    file_to_save_values_name = directory + "values.txt"
+    with open(file_to_save_values_name, 'w') as file:
+        for i in test_neat_result:
+             file.write(str(i))
 
     file_to_save_neat_scores_name = directory + "neat_scores.txt"
     with open(file_to_save_neat_scores_name, 'w') as file:

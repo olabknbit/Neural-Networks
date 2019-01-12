@@ -27,7 +27,8 @@ def test_neat(neural_network):
                     value = random.randint(0, util.DAY_LENGTH)
                     hours.append(value - util.DAY_LENGTH/2 )
                     line_hours.append(value)
-                hours2.append(line_hours)
+                line_hours.sort()
+                hours2.append(line_hours)#Sortowanie
 
             tests.append(hours)
             file.write(str(hours2))
@@ -40,7 +41,7 @@ def test_neat(neural_network):
 
     #print(results)
     #print("\n")
-    bests = int(number_of_tests/10)
+    bests = int(number_of_tests/config.percent_check)
     best_results = results[:bests]
     #print(best_results)
     routes_filename = util.get_routes_filename(routes_lines, routes_stops)
@@ -91,7 +92,7 @@ def calculate_error(result_pairs):
 
     
     
-    return error,  100* error/(config.neat_tests/10)
+    return error,  100* error/(config.percent_check * config.neat_tests/100)
 
 
 
