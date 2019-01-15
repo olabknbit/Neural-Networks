@@ -173,7 +173,7 @@ def scale_data(y_train, y_test):
     # max_y = max(y_train + y_test)
     import config 
     min_y = 0
-    max_y =  config.no_avaible_bus_penalty *  config.trips_m# to fix- remove config.trips_m
+    max_y =  config.no_avaible_bus_penalty # fix- removed config.trips_m
     
     y_train = [(y - min_y) / (max_y - min_y) for y in y_train]
     y_test = [(y - min_y) / (max_y - min_y) for y in y_test]

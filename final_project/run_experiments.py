@@ -96,7 +96,7 @@ def main():
     date_end = datetime.now()#end
 
     from test_neat import calculate_error
-    error, error_percent = calculate_error(pairs_result)
+    error, error_percent, abserror, abserror_percent = calculate_error(pairs_result)
 
 
 
@@ -112,6 +112,9 @@ def main():
         "\n\nResult single neat: " + str(test_neat_result_single)+
         "\nNeat error: " + str(error)+
         "\nNeat error_percent: " + str(error_percent)+
+        "\nNeat abserror: " + str(abserror)+
+        "\nNeat abserror_percent: " + str(abserror_percent)+
+
         # "\nResult single generated_hours: " + str(test_generated_hours_result)+
         "\nResult small monte carlo simulator: "+ str(test_monte_carlo_result_small)+
         "\nResult medium monte carlo simulator: "+ str(test_monte_carlo_result_medium)+
@@ -140,8 +143,9 @@ def main():
 
     file_to_save_values_name = directory + "values.txt"
     with open(file_to_save_values_name, 'w') as file:
-        for i in test_neat_result:
-             file.write(str(i))
+        for neat_value, sim_value in test_neat_result:
+            file.write("Sim_value= " + str(sim_value)+" Neat value= "+ str(neat_value))
+            file.write('\n')
 
     file_to_save_neat_scores_name = directory + "neat_scores.txt"
     with open(file_to_save_neat_scores_name, 'w') as file:
